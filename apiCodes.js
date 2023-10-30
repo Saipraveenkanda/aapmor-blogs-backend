@@ -12,8 +12,7 @@ const client = new MongoClient("mongodb://localhost:27017");
 // Register API
 
 app.post("/register", async (request, response) => {
-  const { firstName, lastName, email, password, confirmPassword } =
-    request.body;
+  const { firstName, lastName, email, password } = request.body;
   const hashedPassword = await bcrypt.hash(password, 10);
   client
     .db("Blogsdata")
@@ -29,7 +28,6 @@ app.post("/register", async (request, response) => {
             lastName: lastName,
             email: email,
             password: hashedPassword,
-            confirmPassword: confirmPassword,
           })
           .then((res) => {
             console.log(res);
