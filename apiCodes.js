@@ -41,4 +41,33 @@ app.post("/register", async (request, response) => {
     });
 });
 
+// Login API
+
+app.post("/login", async (request, response) => {
+  const { email, password } = request.body;
+  let dbUser = client
+    .db("Blogsdata")
+    .collection("users")
+    .findOne({ email: email });
+  if (dbUser === null) {
+    response.status(400);
+
+    response.json({ error_msg: "Invalid email" });
+  } else {
+    const isPassowrdMatched = await bcrypt.compare(password, dbUser.password);
+
+    if (isPassowrdMatched === true) {
+      const payLoad = {
+        email: email,
+      };
+
+      const jwtToken = jwt.sign(payLoad, "MY_SECRET_TOKEN");
+      response.send(jwtToken);
+    } else {
+      response.status(400);
+      response.json({ message: "Invalid Password" });
+    }
+  }
+});
+
 module.exports = app;
