@@ -45,13 +45,13 @@ app.post("/login", async (request, response) => {
     .collection("users")
     .findOne({ email: email })
     .then(async (respObj) => {
-      if (dbUser === null) {
+      if (respObj === null) {
         response.status(400);
         response.json({ message: "Invalid email" });
       } else {
         const isPasswordMatched = await bcrypt.compare(
           password,
-          dbUser.password
+          respObj.password
         );
         if (isPasswordMatched === true) {
           const payload = {
