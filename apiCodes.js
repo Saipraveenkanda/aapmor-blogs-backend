@@ -2,47 +2,41 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
-const { MongoClient } = require("mongodb");
-const client = new MongoClient("mongodb://localhost:27017");
+const { connection } = require("./connect");
+// const { client } = require("./connect");
 
 // Register API
 
 app.post("/api/register", async (request, response) => {
   const { firstname, lastname, email, password, isEmployee } = request.body;
+  console.log(password);
   const hashedPassword = await bcrypt.hash(password, 10);
-  client
-    .db("Blogsdata")
-    .collection("users")
-    .findOne({ email: email })
-    .then((res) => {
-      if (res === null) {
-        client
-          .db("Blogsdata")
-          .collection("users")
-          .insertOne({
-            firstname: firstname,
-            lastname: lastname,
-            email: email,
-            password: hashedPassword,
-            isEmployee: isEmployee,
-          })
-          .then((res) => {
-            console.log(res);
-            response.json({ message: "User created successfully" });
-          });
-      } else {
-        response.json({ message: "Email already Exists" });
-      }
-    });
+  console.log(connection);
+  connection.findOne({ email: email }).then((res) => {
+    if (res === null) {
+      connection
+        .insertOne({
+          firstname: firstname,
+          lastname: lastname,
+          email: email,
+          password: hashedPassword,
+          isEmployee: isEmployee,
+        })
+        .then((res) => {
+          console.log(res);
+          response.json({ message: "User created successfully" });
+        });
+    } else {
+      response.json({ message: "Email already Exists" });
+    }
+  });
 });
 
 // Login API
 
 app.post("/api/login", async (request, response) => {
   const { email, password } = request.body;
-  client
-    .db("Blogsdata")
-    .collection("users")
+  connection
     .findOne({ email: email })
     .then(async (respObj) => {
       if (respObj === null) {
