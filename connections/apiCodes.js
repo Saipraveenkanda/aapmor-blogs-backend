@@ -62,4 +62,20 @@ app.post("/api/login", async (request, response) => {
     .catch((err) => response.send(err));
 });
 
+app.put("/users", async (request, response) => {
+  const { updatePassword, email } = request.body;
+  console.log(request.body);
+  const hashedPassword = await bcrypt.hash(updatePassword, 10);
+  connection
+    .updateOne(
+      {
+        email: email,
+      },
+      { $set: { password: hashedPassword } }
+    )
+    .then((res) => {
+      response.send(res);
+    })
+    .catch((err) => response.send(err));
+});
 module.exports = app;

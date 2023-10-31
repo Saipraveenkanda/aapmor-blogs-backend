@@ -2,6 +2,7 @@ const expressAsyncHandler = require("express-async-handler");
 const dotenv = require("dotenv");
 const nodemailer = require("nodemailer");
 const { generateOTP } = require("./otpGenerate");
+const { connection } = require("../connections/connect");
 
 dotenv.config();
 
@@ -17,31 +18,37 @@ let transporter = nodemailer.createTransport({
 
 const sendEmail = expressAsyncHandler(async (request, response) => {
   const { email } = request.body;
-  const otp = generateOTP();
+  connection.findOne({ email: email }).then((res) => {
+    if (res !== null) {
+      const otp = generateOTP();
 
-  var mailOptions = {
-    from: process.env.SMTP_MAIL,
-    to: email,
-    subject: "Email Confirmation: Your One-Time Passcode (OTP)",
-    text: `Thank you for taking the first step to verify your email address with us. Your security is important to us, and this extra layer of protection ensures that your email is valid and secure.
+      var mailOptions = {
+        from: process.env.SMTP_MAIL,
+        to: email,
+        subject: "Email Confirmation: Your One-Time Passcode (OTP)",
+        text: `Thank you for taking the first step to verify your email address with us. Your security is important to us, and this extra layer of protection ensures that your email is valid and secure.
+         
+         To complete the email confirmation process, please use the following One-Time Passcode (OTP):
+         
+         OTP: ${otp}
+         
+         Please enter this OTP on the verification page to confirm your email address. If you did not initiate this request or have any concerns about the security of your account, please contact our support team immediately.
+         
+         Thank you for choosing us. We appreciate your trust in our services.
+         
+         Sincerely,
+         Aapmor | Blogs`,
+      };
 
-    To complete the email confirmation process, please use the following One-Time Passcode (OTP):
-
-    OTP: ${otp}
-    
-    Please enter this OTP on the verification page to confirm your email address. If you did not initiate this request or have any concerns about the security of your account, please contact our support team immediately.
-    
-    Thank you for choosing us. We appreciate your trust in our services.
-    
-    Sincerely,
-    Aapmor | Blogs`,
-  };
-
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      response.send(error);
+      transporter.sendMail(mailOptions, function (error, info) {
+        if (error) {
+          response.send(error);
+        } else {
+          response.json({ message: "Email sent successfully!", otp });
+        }
+      });
     } else {
-      response.json({ message: "Email sent successfully!" });
+      response.status(202).json({ message: "Email Id doesn't exist" });
     }
   });
 });
