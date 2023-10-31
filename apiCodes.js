@@ -12,7 +12,7 @@ app.post("/sendEmail", sendEmail);
 
 // Register API
 
-app.post("/register", async (request, response) => {
+app.post("/api/register", async (request, response) => {
   const { firstname, lastname, email, password, isEmployee } = request.body;
   console.log(password);
   const hashedPassword = await bcrypt.hash(password, 10);
@@ -39,7 +39,7 @@ app.post("/register", async (request, response) => {
 
 // Login API
 
-app.post("/login", async (request, response) => {
+app.post("/api/login", async (request, response) => {
   const { email, password } = request.body;
   connection
     .findOne({ email: email })
