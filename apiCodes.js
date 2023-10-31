@@ -7,7 +7,7 @@ const { connection } = require("./connect");
 
 // Register API
 
-app.post("/api/register", async (request, response) => {
+app.post("/register", async (request, response) => {
   const { firstname, lastname, email, password, isEmployee } = request.body;
   console.log(password);
   const hashedPassword = await bcrypt.hash(password, 10);
