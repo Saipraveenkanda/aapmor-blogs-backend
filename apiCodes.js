@@ -3,7 +3,12 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
 const { connection } = require("./connect");
+// const { sendEmail } = require("./sendMail");
+const { sendEmail } = require("./emailControllers");
+
 // const { client } = require("./connect");
+
+app.post("/sendEmail", sendEmail);
 
 // Register API
 
