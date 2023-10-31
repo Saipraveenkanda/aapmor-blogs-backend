@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const app = express();
 const { connection } = require("./connect");
 // const { sendEmail } = require("./sendMail");
-const { sendEmail } = require("./emailControllers");
+const { sendEmail } = require("../emailVerification/emailControllers");
 
 // const { client } = require("./connect");
 
@@ -14,9 +14,7 @@ app.post("/sendEmail", sendEmail);
 
 app.post("/api/register", async (request, response) => {
   const { firstname, lastname, email, password, isEmployee } = request.body;
-  console.log(password);
   const hashedPassword = await bcrypt.hash(password, 10);
-  console.log(connection);
   connection.findOne({ email: email }).then((res) => {
     if (res === null) {
       connection
@@ -27,9 +25,8 @@ app.post("/api/register", async (request, response) => {
           password: hashedPassword,
           isEmployee: isEmployee,
         })
-        .then((res) => {
-          console.log(res);
-          response.json({ message: "User created successfully" });
+        .then((resp) => {
+          response.status(201).json({ message: "User created successfully" });
         });
     } else {
       response.json({ message: "Email already Exists" });
@@ -45,8 +42,7 @@ app.post("/api/login", async (request, response) => {
     .findOne({ email: email })
     .then(async (respObj) => {
       if (respObj === null) {
-        response.status(400);
-        response.json({ message: "Invalid email" });
+        response.status(202).json({ message: "Invalid email" });
       } else {
         const isPasswordMatched = await bcrypt.compare(
           password,
@@ -57,10 +53,9 @@ app.post("/api/login", async (request, response) => {
             email: email,
           };
           const jwt_token = jwt.sign(payload, "SECRET");
-          response.json({ jwt_token });
+          response.status(200).json({ jwt_token });
         } else {
-          response.status(400);
-          response.json({ message: "Invalid Password" });
+          response.status(202).json({ message: "Invalid Password" });
         }
       }
     })
