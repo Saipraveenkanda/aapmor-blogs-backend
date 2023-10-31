@@ -7,3 +7,5 @@ const collection = "users";
 const connection = client.db(dataBase).collection(collection);
 exports.connection = connection;
 // module.exports = client;
+
+//sample code
