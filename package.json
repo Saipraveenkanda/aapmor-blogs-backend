@@ -6,7 +6,8 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.2.0",
     "mongoose": "^7.6.3",
-    "nodemon": "^3.0.1"
+    "nodemon": "^3.0.1",
+    "otp-generator": "^4.0.1"
   },
   "scripts": {
     "start": "nodemon server.js"
@@ -14,7 +15,6 @@
   "name": "aapmor-blogs-backend",
   "version": "1.0.0",
   "main": "apiCodes.js",
-  "devDependencies": {},
   "author": "",
   "license": "ISC",
   "description": ""
