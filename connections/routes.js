@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
 const { connection } = require("./database");
+const { Model } = require("./schema");
 // const { sendEmail } = require("./sendMail");
 const { sendEmail } = require("../emailVerification/emailControllers");
 
@@ -78,4 +79,14 @@ app.put("/users", async (request, response) => {
     })
     .catch((err) => response.send(err));
 });
+
+app.get("/blogs", async (request, response) => {
+  const blogsArray = await Model.find({});
+  try {
+    response.send(blogsArray);
+  } catch (error) {
+    response.send(error);
+  }
+});
+
 module.exports = app;
