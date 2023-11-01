@@ -1,7 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const Router = require("./connections/apiCodes");
+const Router = require("./connections/routes");
 const app = express();
 app.use(express.json());
 

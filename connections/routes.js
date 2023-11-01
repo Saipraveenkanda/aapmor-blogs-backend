@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
-const { connection } = require("./connect");
+const { connection } = require("./database");
 // const { sendEmail } = require("./sendMail");
 const { sendEmail } = require("../emailVerification/emailControllers");
 
