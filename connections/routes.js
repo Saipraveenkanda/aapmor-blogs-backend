@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
-const { connection } = require("./database");
+const { connection, connectionBlogs } = require("./database");
 const { Model } = require("./schema");
 // const { sendEmail } = require("./sendMail");
 const { sendEmail } = require("../emailVerification/emailControllers");
@@ -75,6 +75,42 @@ app.get("/blogs", async (request, response) => {
   } catch (error) {
     response.send(error);
   }
+});
+
+app.post("/blogs", async (request, response) => {
+  const {
+    title,
+    description,
+    category,
+    blogImage,
+    username,
+    userrole,
+    date,
+    likes,
+    commentsArray,
+  } = request.body;
+  console.log(request.body);
+
+  connectionBlogs
+    .insertOne({
+      title: title,
+      description: description,
+      category: category,
+      blogImage: blogImage,
+      username: username,
+      userrole: userrole,
+      date: date,
+      likes: likes,
+      comments: commentsArray,
+    })
+    .then((res) => {
+      console.log(res);
+      response.status(200);
+      response.send(res);
+    })
+    .catch((err) => {
+      response.send(err);
+    });
 });
 
 module.exports = app;
