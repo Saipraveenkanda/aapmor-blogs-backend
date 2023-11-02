@@ -3,12 +3,13 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
 const { connection } = require("./database");
-const { Model } = require("./schema");
 // const { sendEmail } = require("./sendMail");
 const { sendEmail } = require("../emailVerification/emailControllers");
+const { Model } = require("mongoose");
 
 // const { client } = require("./connect");
 
+// Send OTP API
 app.post("/sendEmail", sendEmail);
 
 // Register API
@@ -38,27 +39,15 @@ app.post("/sendEmail", sendEmail);
 // Login API
 
 app.post("/api/login", async (request, response) => {
-  const { email, password } = request.body;
+  const { email } = request.body;
   connection
-    .findOne({ email: email })
-    .then(async (respObj) => {
-      if (respObj === null) {
-        response.status(202).json({ message: "Invalid email" });
-      } else {
-        const isPasswordMatched = await bcrypt.compare(
-          password,
-          respObj.password
-        );
-        if (isPasswordMatched === true) {
-          const payload = {
-            email: email,
-          };
-          const jwt_token = jwt.sign(payload, "SECRET");
-          response.status(200).json({ jwt_token });
-        } else {
-          response.status(202).json({ message: "Invalid Password" });
-        }
-      }
+    .insertOne({ email: email })
+    .then((res) => {
+      const payload = {
+        email: email,
+      };
+      const jwt_token = jwt.sign(payload, "SECRET");
+      response.status(200).json({ jwt_token });
     })
     .catch((err) => response.send(err));
 });
@@ -84,8 +73,8 @@ app.get("/blogs", async (request, response) => {
   const blogsArray = await Model.find({});
   try {
     response.send(blogsArray);
-  } catch (error) {
-    response.send(error);
+  } catch (err) {
+    response.send(err);
   }
 });
 

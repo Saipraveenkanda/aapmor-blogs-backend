@@ -15,6 +15,7 @@ db.once("open", () => {
   console.log("connected to database");
 });
 app.use(Router);
+
 app.listen(3005, () => {
   console.log("server running at 3005");
 });
