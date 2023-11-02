@@ -5,6 +5,7 @@ const app = express();
 const { connection } = require("./database");
 // const { sendEmail } = require("./sendMail");
 const { sendEmail } = require("../emailVerification/emailControllers");
+const { Model } = require("mongoose");
 
 // const { client } = require("./connect");
 
@@ -67,4 +68,14 @@ app.put("/users", async (request, response) => {
     })
     .catch((err) => response.send(err));
 });
+
+app.get("/blogs", async (request, response) => {
+  const blogsArray = await Model.find({});
+  try {
+    response.send(blogsArray);
+  } catch (err) {
+    response.send(err);
+  }
+});
+
 module.exports = app;

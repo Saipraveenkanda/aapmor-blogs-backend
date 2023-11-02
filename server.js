@@ -6,7 +6,9 @@ const app = express();
 app.use(express.json());
 
 app.use(cors());
-mongoose.connect("mongodb://localhost:27017/Blogsdata");
+mongoose.connect(
+  "mongodb+srv://aapmorblogs:aapmorblogs@aapmorblogsdb.pyyvcvm.mongodb.net/aapmorBlogsDb"
+);
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", () => {
