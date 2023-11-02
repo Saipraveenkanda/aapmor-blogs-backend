@@ -1,9 +1,7 @@
 const { MongoClient } = require("mongodb");
-const client = new MongoClient(
-  "mongodb+srv://aapmorblogs:aapmorblogs@aapmorblogsdb.pyyvcvm.mongodb.net/"
-);
+const client = new MongoClient("mongodb://localhost:27017");
 
-const dataBase = "aapmorBlogsDb";
+const dataBase = "Blogsdata";
 const collection = "users";
 
 const connection = client.db(dataBase).collection(collection);
