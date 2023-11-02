@@ -13,27 +13,27 @@ app.post("/sendEmail", sendEmail);
 
 // Register API
 
-app.post("/api/register", async (request, response) => {
-  const { firstname, lastname, email, password, isEmployee } = request.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
-  connection.findOne({ email: email }).then((res) => {
-    if (res === null) {
-      connection
-        .insertOne({
-          firstname: firstname,
-          lastname: lastname,
-          email: email,
-          password: hashedPassword,
-          isEmployee: isEmployee,
-        })
-        .then((resp) => {
-          response.status(201).json({ message: "User created successfully" });
-        });
-    } else {
-      response.json({ message: "Email already Exists" });
-    }
-  });
-});
+// app.post("/api/register", async (request, response) => {
+//   const { firstname, lastname, email, password, isEmployee } = request.body;
+//   const hashedPassword = await bcrypt.hash(password, 10);
+//   connection.findOne({ email: email }).then((res) => {
+//     if (res === null) {
+//       connection
+//         .insertOne({
+//           firstname: firstname,
+//           lastname: lastname,
+//           email: email,
+//           password: hashedPassword,
+//           isEmployee: isEmployee,
+//         })
+//         .then((resp) => {
+//           response.status(201).json({ message: "User created successfully" });
+//         });
+//     } else {
+//       response.json({ message: "Email already Exists" });
+//     }
+//   });
+// });
 
 // Login API
 
