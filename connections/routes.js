@@ -6,6 +6,7 @@ const { connection, connectionBlogs } = require("./database");
 const { Model } = require("./schema");
 // const { sendEmail } = require("./sendMail");
 const { sendEmail } = require("../emailVerification/emailControllers");
+const { ObjectId } = require("mongodb");
 
 // const { client } = require("./connect");
 
@@ -128,4 +129,13 @@ app.get("/blogs/filter", async (request, response) => {
   }
 });
 
+//blog view comp
+app.get("/blogs/:id", (request, response) => {
+  const { id } = request.params;
+  console.log(id);
+  connectionBlogs
+    .findOne({ _id: new ObjectId(id) })
+    .then((res) => response.send(res))
+    .catch((err) => console.log(err));
+});
 module.exports = app;
