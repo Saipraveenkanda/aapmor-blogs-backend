@@ -53,7 +53,7 @@ app.post("/api/login", async (request, response) => {
 
 app.put("/users", async (request, response) => {
   const { updatePassword, email } = request.body;
-  console.log(request.body);
+
   const hashedPassword = await bcrypt.hash(updatePassword, 10);
   connection
     .updateOne(
@@ -89,7 +89,6 @@ app.post("/blogs", async (request, response) => {
     likes,
     commentsArray,
   } = request.body;
-  console.log(request.body);
 
   connectionBlogs
     .insertOne({
