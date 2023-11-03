@@ -6,6 +6,7 @@ const { connection, connectionBlogs } = require("./database");
 const { Model } = require("./schema");
 // const { sendEmail } = require("./sendMail");
 const { sendEmail } = require("../emailVerification/emailControllers");
+const { ObjectId } = require("mongodb");
 
 // const { client } = require("./connect");
 
@@ -103,7 +104,6 @@ app.post("/blogs", async (request, response) => {
       comments: commentsArray,
     })
     .then((res) => {
-      console.log(res);
       response.status(200);
       response.send(res);
     })
@@ -112,4 +112,30 @@ app.post("/blogs", async (request, response) => {
     });
 });
 
+//category Api
+
+app.get("/blogs/filter", async (request, response) => {
+  const { category } = request.query;
+  if (category === "All") {
+    var query = Model.find({});
+  } else {
+    var query = Model.find({ category: category });
+  }
+  const blogsByCategory = await query;
+  try {
+    response.send(blogsByCategory);
+  } catch (error) {
+    response.send(error);
+  }
+});
+
+//blog view comp
+app.get("/blogs/:id", (request, response) => {
+  const { id } = request.params;
+  console.log(id);
+  connectionBlogs
+    .findOne({ _id: new ObjectId(id) })
+    .then((res) => response.send(res))
+    .catch((err) => console.log(err));
+});
 module.exports = app;
