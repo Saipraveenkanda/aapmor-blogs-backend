@@ -89,7 +89,6 @@ app.post("/blogs", async (request, response) => {
     likes,
     commentsArray,
   } = request.body;
-  console.log(request.body);
 
   connectionBlogs
     .insertOne({
@@ -104,13 +103,29 @@ app.post("/blogs", async (request, response) => {
       comments: commentsArray,
     })
     .then((res) => {
-      console.log(res);
       response.status(200);
       response.send(res);
     })
     .catch((err) => {
       response.send(err);
     });
+});
+
+//category Api
+
+app.get("/blogs/filter", async (request, response) => {
+  const { category } = request.query;
+  if (category === "All") {
+    var query = Model.find({});
+  } else {
+    var query = Model.find({ category: category });
+  }
+  const blogsByCategory = await query;
+  try {
+    response.send(blogsByCategory);
+  } catch (error) {
+    response.send(error);
+  }
 });
 
 module.exports = app;
