@@ -2,10 +2,14 @@ const expressAsyncHandler = require("express-async-handler");
 const dotenv = require("dotenv");
 const nodemailer = require("nodemailer");
 const { generateOTP } = require("./otpGenerate");
+const { getOtp } = require("../otp");
 const { connection } = require("../connections/database");
 
+<<<<<<< HEAD
 // const otp = generateOTP();
 
+=======
+>>>>>>> b03d2b0b69107668e027d6c4f110428dfe71aff5
 dotenv.config();
 
 let transporter = nodemailer.createTransport({
@@ -21,16 +25,15 @@ let transporter = nodemailer.createTransport({
 const sendEmail = expressAsyncHandler(async (request, response) => {
   const { email } = request.body;
   console.log(email);
-  const otp = generateOTP();
+  const otpCode = getOtp();
 
   const message = `Thank you for taking the first step to verify your email address with us. Your security is important to us, and this extra layer of protection ensures that your email is valid and secure.
-         
-To complete the email confirmation process, please use the following One-Time Passcode (OTP):
-OTP: ${otp}
-Please enter this OTP on the verification page to confirm your email address. If you did not initiate this request or have any concerns about the security of your account, please contact our support team immediately.
-Thank you for choosing us. We appreciate your trust in our services.
-Sincerely,
-Aapmor | Blogs`;
+    To complete the email confirmation process, please use the following One-Time Passcode (OTP):
+    OTP: ${otpCode}
+    Please enter this OTP on the verification page to confirm your email address. If you did not initiate this request or have any concerns about the security of your account, please contact our support team immediately.
+    Thank you for choosing us. We appreciate your trust in our services.
+    Sincerely,
+    Aapmor | Blogs`;
   // connection.findOne({ email: email }).then((res) => {
   //   if (res !== null) {
   var mailOptions = {
@@ -45,7 +48,7 @@ Aapmor | Blogs`;
       response.send(error);
     } else {
       response.status(200);
-      response.json({ message: "Email sent successfully!", otp });
+      response.json({ message: "Email sent successfully!", otpCode });
     }
   });
 });
