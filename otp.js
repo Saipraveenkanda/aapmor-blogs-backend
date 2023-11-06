@@ -30,7 +30,6 @@ const getOtp = () => {
       otpRandomOrder[Math.floor(Math.random() * otpRandomOrder.length)];
     otp += randomOtp;
   }
-  console.log(otp);
   return otp;
 };
 
