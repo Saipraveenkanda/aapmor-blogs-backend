@@ -40,16 +40,26 @@ app.post("/sendEmail", sendEmail);
 
 app.post("/api/login", async (request, response) => {
   const { email } = request.body;
-  connection
-    .insertOne({ email: email })
-    .then((res) => {
+  connection.findOne({ email: email }).then((resObj) => {
+    if (resObj === null) {
+      connection
+        .insertOne({ email: email })
+        .then((res) => {
+          const payload = {
+            email: email,
+          };
+          const jwt_token = jwt.sign(payload, "SECRET");
+          response.status(200).json({ jwt_token });
+        })
+        .catch((err) => response.send(err));
+    } else {
       const payload = {
         email: email,
       };
       const jwt_token = jwt.sign(payload, "SECRET");
       response.status(200).json({ jwt_token });
-    })
-    .catch((err) => response.send(err));
+    }
+  });
 });
 
 app.put("/users", async (request, response) => {
@@ -139,3 +149,7 @@ app.get("/blogs/:id", (request, response) => {
     .catch((err) => console.log(err));
 });
 module.exports = app;
+
+app.post("/comments", (request, response) => {
+  const { comment } = request.body;
+});

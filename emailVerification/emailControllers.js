@@ -4,20 +4,7 @@ const nodemailer = require("nodemailer");
 const { generateOTP } = require("./otpGenerate");
 const { connection } = require("../connections/database");
 
-const otp = generateOTP();
-
-const message = `Thank you for taking the first step to verify your email address with us. Your security is important to us, and this extra layer of protection ensures that your email is valid and secure.
-         
-To complete the email confirmation process, please use the following One-Time Passcode (OTP):
-
-OTP: ${otp}
-
-Please enter this OTP on the verification page to confirm your email address. If you did not initiate this request or have any concerns about the security of your account, please contact our support team immediately.
-
-Thank you for choosing us. We appreciate your trust in our services.
-
-Sincerely,
-Aapmor | Blogs`;
+// const otp = generateOTP();
 
 dotenv.config();
 
