@@ -5,11 +5,6 @@ const { generateOTP } = require("./otpGenerate");
 const { getOtp } = require("../otp");
 const { connection } = require("../connections/database");
 
-<<<<<<< HEAD
-// const otp = generateOTP();
-
-=======
->>>>>>> b03d2b0b69107668e027d6c4f110428dfe71aff5
 dotenv.config();
 
 let transporter = nodemailer.createTransport({
