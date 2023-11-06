@@ -4,60 +4,53 @@ const jwt = require("jsonwebtoken");
 const app = express();
 const { connection, connectionBlogs } = require("./database");
 const { Model } = require("./schema");
-// const { sendEmail } = require("./sendMail");
 const { sendEmail } = require("../emailVerification/emailControllers");
 const { ObjectId } = require("mongodb");
-
+// const otpCode = require("../emailVerification/emailControllers");
+// console.log(otpCode, "from routes");
 // const { client } = require("./connect");
 
 app.post("/sendEmail", sendEmail);
 
-// Register API
-
-// app.post("/api/register", async (request, response) => {
-//   const { firstname, lastname, email, password, isEmployee } = request.body;
-//   const hashedPassword = await bcrypt.hash(password, 10);
-//   connection.findOne({ email: email }).then((res) => {
-//     if (res === null) {
-//       connection
-//         .insertOne({
-//           firstname: firstname,
-//           lastname: lastname,
-//           email: email,
-//           password: hashedPassword,
-//           isEmployee: isEmployee,
-//         })
-//         .then((resp) => {
-//           response.status(201).json({ message: "User created successfully" });
-//         });
-//     } else {
-//       response.json({ message: "Email already Exists" });
-//     }
-//   });
-// });
+//middleware
+const authenticateToken = (request, response, next) => {
+  let jwtToken;
+  const authHeader = request.headers["authorization"];
+  console.log(authHeader);
+  if (authHeader !== undefined) {
+    jwtToken = authHeader.split(" ")[1];
+  }
+  if (jwtToken === undefined) {
+    response.status(202);
+    response.send("Authorization failed");
+  } else {
+    jwt.verify(jwtToken, "ABPPBH_ST", (error, payload) => {
+      if (error) {
+        response.status(202);
+        response.send("Invalid JWT Token");
+      } else {
+        next();
+      }
+    });
+  }
+};
 
 // Login API
 
 app.post("/api/login", async (request, response) => {
-  const { email } = request.body;
-  connection.findOne({ email: email }).then((resObj) => {
-    if (resObj === null) {
-      connection
-        .insertOne({ email: email })
-        .then((res) => {
-          const payload = {
-            email: email,
-          };
-          const jwt_token = jwt.sign(payload, "SECRET");
-          response.status(200).json({ jwt_token });
-        })
-        .catch((err) => response.send(err));
-    } else {
+  const { email, otp } = request.body;
+  console.log(request.body);
+  connection.findOne({ email: email }).then(async (resObj) => {
+    const otpMatched = await bcrypt.compare(otp, resObj.otp);
+    if (otpMatched === true) {
       const payload = {
         email: email,
       };
-      const jwt_token = jwt.sign(payload, "SECRET");
-      response.status(200).json({ jwt_token });
+      const jwt_token = jwt.sign(payload, "ABPPBH_ST");
+      response.status(200).json({ jwt_token, email });
+    } else {
+      response.status(202);
+      response.json({ message: "Invalid Otp" });
     }
   });
 });
@@ -88,7 +81,7 @@ app.get("/blogs", async (request, response) => {
   }
 });
 
-app.post("/blogs", async (request, response) => {
+app.post("/blogs", authenticateToken, async (request, response) => {
   const {
     title,
     description,
@@ -148,8 +141,51 @@ app.get("/blogs/:id", (request, response) => {
     .then((res) => response.send(res))
     .catch((err) => console.log(err));
 });
-module.exports = app;
 
-app.post("/comments", (request, response) => {
-  const { comment } = request.body;
+app.post("/comments", authenticateToken, (request, response) => {
+  const { comment, id, name } = request.body;
+  connectionBlogs
+    .updateOne(
+      { _id: new ObjectId(id) },
+      { $push: { comments: { comment, name } } }
+    )
+    .then((res) => {
+      console.log(res);
+      response.send(res);
+    })
+    .catch((err) => response.send(err));
 });
+
+app.post("/profile", (request, response) => {
+  const { designation, gender, name, email, isProfileUpdated } = request.body;
+  connection
+    .updateOne(
+      { email: email },
+      {
+        $set: {
+          name: name,
+          designation: designation,
+          gender: gender,
+          isProfileUpdated: isProfileUpdated,
+        },
+      }
+    )
+    .then((res) => {
+      response.status(200).json({ message: "Profile Updated", name });
+    })
+    .catch((err) => response.send(err));
+});
+
+app.post("/profile/check", authenticateToken, (request, response) => {
+  const { email } = request.body;
+  console.log(email);
+  connection.findOne({ email: email }).then((res) => {
+    console.log(res);
+    if (res.isProfileUpdated === true) {
+      response.status(200).json({ message: "Profile Already Updated" });
+    } else {
+      response.status(202).json({ message: "Not Updated Yet" });
+    }
+  });
+});
+module.exports = app;

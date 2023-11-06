@@ -4,6 +4,8 @@ const nodemailer = require("nodemailer");
 const { generateOTP } = require("./otpGenerate");
 const { getOtp } = require("../otp");
 const { connection } = require("../connections/database");
+const bcrypt = require("bcrypt");
+
 dotenv.config();
 
 let transporter = nodemailer.createTransport({
@@ -18,9 +20,8 @@ let transporter = nodemailer.createTransport({
 
 const sendEmail = expressAsyncHandler(async (request, response) => {
   const { email } = request.body;
-  console.log(email);
   const otpCode = getOtp();
-
+  console.log(otpCode, "from ec");
   const message = `Thank you for taking the first step to verify your email address with us. Your security is important to us, and this extra layer of protection ensures that your email is valid and secure.
     To complete the email confirmation process, please use the following One-Time Passcode (OTP):
     OTP: ${otpCode}
@@ -38,13 +39,35 @@ const sendEmail = expressAsyncHandler(async (request, response) => {
     // html: htmlBody,
   };
 
-  transporter.sendMail(mailOptions, function (error, info) {
+  transporter.sendMail(mailOptions, async (error, info) => {
     if (error) {
       response.send(error);
     } else {
-      response.status(200);
-      response.json({ message: "Email sent successfully!", otpCode });
+      const hashedOtp = await bcrypt.hash(otpCode, 10);
+      connection.findOne({ email: email }).then((userObj) => {
+        if (userObj !== null) {
+          connection
+            .updateOne({ email: email }, { $set: { otp: hashedOtp } })
+            .then((res) => {
+              response.status(200);
+              response.json({ message: `Otp sent to ${email}` });
+            });
+        } else {
+          console.log("inserting new user");
+          connection
+            .insertOne({
+              email: email,
+              otp: hashedOtp,
+              isProfileUpdated: false,
+            })
+            .then((res) => {
+              response.status(200);
+              response.json({ message: `Otp sent to ${email}` });
+            });
+        }
+      });
     }
   });
 });
 module.exports = { sendEmail };
+// exports.otpCode = { otpCode };
