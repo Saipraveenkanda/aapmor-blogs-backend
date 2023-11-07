@@ -36,6 +36,7 @@ const sendEmail = expressAsyncHandler(async (request, response) => {
     to: email,
     subject: "Email Confirmation: Your One-Time Passcode (OTP)",
     text: message,
+    // html: htmlBody,
   };
 
   transporter.sendMail(mailOptions, async (error, info) => {
