@@ -3,20 +3,21 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
 const { connection, connectionBlogs } = require("./database");
-const { Model } = require("./schema");
+const { Model, UserModel, EmailModel } = require("./schema");
 const { sendEmail } = require("../emailVerification/emailControllers");
 const { ObjectId } = require("mongodb");
+const { sendBlogsMail } = require("../emailVerification/emailHtml");
 // const otpCode = require("../emailVerification/emailControllers");
 // console.log(otpCode, "from routes");
 // const { client } = require("./connect");
 
 app.post("/sendEmail", sendEmail);
+app.post("/usermail", sendBlogsMail);
 
 //middleware
 const authenticateToken = (request, response, next) => {
   let jwtToken;
   const authHeader = request.headers["authorization"];
-  console.log(authHeader);
   if (authHeader !== undefined) {
     jwtToken = authHeader.split(" ")[1];
   }
@@ -39,7 +40,6 @@ const authenticateToken = (request, response, next) => {
 
 app.post("/api/login", async (request, response) => {
   const { email, otp } = request.body;
-  console.log(request.body);
   connection.findOne({ email: email }).then(async (resObj) => {
     const otpMatched = await bcrypt.compare(otp, resObj.otp);
     if (otpMatched === true) {
@@ -135,7 +135,6 @@ app.get("/blogs/filter", async (request, response) => {
 //blog view comp
 app.get("/blogs/:id", (request, response) => {
   const { id } = request.params;
-  console.log(id);
   connectionBlogs
     .findOne({ _id: new ObjectId(id) })
     .then((res) => response.send(res))
@@ -150,7 +149,6 @@ app.post("/comments", authenticateToken, (request, response) => {
       { $push: { comments: { comment, name } } }
     )
     .then((res) => {
-      console.log(res);
       response.send(res);
     })
     .catch((err) => response.send(err));
@@ -178,9 +176,7 @@ app.post("/profile", (request, response) => {
 
 app.post("/profile/check", authenticateToken, (request, response) => {
   const { email } = request.body;
-  console.log(email);
   connection.findOne({ email: email }).then((res) => {
-    console.log(res);
     if (res.isProfileUpdated === true) {
       response.status(200).json({ message: "Profile Already Updated" });
     } else {
@@ -188,4 +184,15 @@ app.post("/profile/check", authenticateToken, (request, response) => {
     }
   });
 });
+
+app.put("/likes", (request, response) => {
+  const { likes, id } = request.body;
+  connectionBlogs
+    .updateOne({ _id: new ObjectId(id) }, { $set: { likes: likes + 1 } })
+    .then((res) => {
+      response.send(res);
+    })
+    .catch((err) => response.send(err));
+});
+
 module.exports = app;

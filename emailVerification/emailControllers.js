@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 const nodemailer = require("nodemailer");
 const { generateOTP } = require("./otpGenerate");
 const { getOtp } = require("../otp");
-const { connection } = require("../connections/database");
+const { connection, connectionEmail } = require("../connections/database");
 const bcrypt = require("bcrypt");
 
 dotenv.config();
@@ -63,6 +63,9 @@ const sendEmail = expressAsyncHandler(async (request, response) => {
               response.status(200);
               response.json({ message: `Otp sent to ${email}` });
             });
+          connectionEmail.insertOne({
+            email: email,
+          });
         }
       });
     }
