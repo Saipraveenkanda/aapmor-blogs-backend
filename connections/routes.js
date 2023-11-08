@@ -91,7 +91,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
     userrole,
     date,
     likes,
-    commentsArray,
+    comments,
     htmlFile,
   } = request.body;
 
@@ -105,7 +105,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
       userrole: userrole,
       date: date,
       likes: likes,
-      comments: commentsArray,
+      comments,
       html: htmlFile,
     })
     .then((res) => {
@@ -144,14 +144,17 @@ app.get("/blogs/:id", (request, response) => {
 });
 
 app.post("/comments", authenticateToken, (request, response) => {
-  const { comment, id, name } = request.body;
+  const { comment, id, name, dateObject } = request.body;
   connectionBlogs
-    .updateOne(
+    .findOneAndUpdate(
       { _id: new ObjectId(id) },
-      { $push: { comments: { comment, name } } }
+      { $push: { comments: { comment, name, dateObject } } },
+      { $upsert: true },
+      { new: true }
     )
     .then((res) => {
-      response.send(res);
+      console.log(res);
+      response.status(200).json({ message: "new comment added" });
     })
     .catch((err) => response.send(err));
 });
