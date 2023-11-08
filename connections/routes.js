@@ -189,7 +189,7 @@ app.post("/profile/check", authenticateToken, (request, response) => {
   });
 });
 
-app.put("/likes", (request, response) => {
+app.put("/likes", async (request, response) => {
   const { id } = request.body;
   console.log(id);
   connectionBlogs
