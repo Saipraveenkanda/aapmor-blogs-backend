@@ -108,7 +108,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
     })
     .then((res) => {
       response.status(200);
-      response.send(res);
+      response.json({ message: res.insertedId });
     })
     .catch((err) => {
       response.send(err);
