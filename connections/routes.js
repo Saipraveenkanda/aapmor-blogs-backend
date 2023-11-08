@@ -92,6 +92,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
     date,
     likes,
     commentsArray,
+    htmlFile,
   } = request.body;
 
   connectionBlogs
@@ -105,6 +106,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
       date: date,
       likes: likes,
       comments: commentsArray,
+      html: htmlFile,
     })
     .then((res) => {
       response.status(200);
@@ -169,7 +171,9 @@ app.post("/profile", (request, response) => {
       }
     )
     .then((res) => {
-      response.status(200).json({ message: "Profile Updated", name });
+      response
+        .status(200)
+        .json({ message: "Profile Updated", name, designation });
     })
     .catch((err) => response.send(err));
 });
