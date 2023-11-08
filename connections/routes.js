@@ -186,9 +186,10 @@ app.post("/profile/check", authenticateToken, (request, response) => {
 });
 
 app.put("/likes", (request, response) => {
-  const { likes, id } = request.body;
+  const { id } = request.body;
+  console.log(id);
   connectionBlogs
-    .updateOne({ _id: new ObjectId(id) }, { $set: { likes: likes + 1 } })
+    .findOneAndUpdate({ _id: new ObjectId(id) }, { $inc: { likes: 1 } })
     .then((res) => {
       response.send(res);
     })
