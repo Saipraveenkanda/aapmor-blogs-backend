@@ -122,9 +122,9 @@ app.post("/blogs", authenticateToken, async (request, response) => {
 app.get("/blogs/filter", async (request, response) => {
   const { category } = request.query;
   if (category === "All") {
-    var query = Model.find({}).sort({ date: 1 });
+    var query = Model.find({}); /* .sort({ date: 1 }) */
   } else {
-    var query = Model.find({ category: category }).sort({ date: 1 });
+    var query = Model.find({ category: category }); /* .sort({ date: 1 }) */
   }
   const blogsByCategory = await query;
   try {
