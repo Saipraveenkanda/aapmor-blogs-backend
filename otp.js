@@ -1,5 +1,4 @@
 const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-// const symbols = ["!", "@", "#", "$", "%", "^", "&", "*"];
 const getCaps = () => {
   let caps = [];
   for (i = 65; i <= 90; i++) {
@@ -20,7 +19,6 @@ const getOtp = () => {
   const randomNumber = Math.floor(Math.random() * numbers.length);
   const randomSmall = getSmalls();
   const randomCaps = getCaps();
-  // const randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
 
   const otpRandomOrder = [randomNumber, randomCaps, randomSmall];
 
