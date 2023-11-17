@@ -4,7 +4,7 @@ const nodemailer = require("nodemailer");
 const { EmailModel } = require("../connections/schema");
 const path = require("path");
 const fs = require("fs");
-const htmlPath = path.join(__dirname, "content.html");
+const htmlPath = path.join(__dirname, "newsLetter.html");
 const htmlFile = fs.readFileSync(htmlPath, "utf-8");
 
 dotenv.config();

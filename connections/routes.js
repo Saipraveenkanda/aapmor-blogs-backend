@@ -3,13 +3,10 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
 const { connection, connectionBlogs } = require("./database");
-const { Model, UserModel, EmailModel } = require("./schema");
-const { sendEmail } = require("../emailVerification/emailControllers");
+const { Model } = require("./schema");
+const { sendEmail } = require("../emailServices/otpService");
 const { ObjectId } = require("mongodb");
-const { sendBlogsMail } = require("../emailVerification/emailHtml");
-// const otpCode = require("../emailVerification/emailControllers");
-// console.log(otpCode, "from routes");
-// const { client } = require("./connect");
+const { sendBlogsMail } = require("../emailServices/newsletterService");
 
 app.post("/sendEmail", sendEmail);
 app.post("/usermail", sendBlogsMail);
@@ -73,7 +70,7 @@ app.put("/users", async (request, response) => {
 });
 
 app.get("/blogs", async (request, response) => {
-  const blogsArray = await Model.find({});
+  const blogsArray = await Model.find({}).sort({ date: -1 });
   try {
     response.send(blogsArray);
   } catch (error) {
@@ -122,9 +119,9 @@ app.post("/blogs", authenticateToken, async (request, response) => {
 app.get("/blogs/filter", async (request, response) => {
   const { category } = request.query;
   if (category === "All") {
-    var query = Model.find({});
+    var query = Model.find({}).sort({ date: -1 });
   } else {
-    var query = Model.find({ category: category });
+    var query = Model.find({ category: category }).sort({ date: -1 });
   }
   const blogsByCategory = await query;
   try {
@@ -185,7 +182,8 @@ app.post("/profile/check", authenticateToken, (request, response) => {
   const { email } = request.body;
   connection.findOne({ email: email }).then((res) => {
     if (res.isProfileUpdated === true) {
-      response.status(200).json({ message: "Profile Already Updated" });
+      response.status(200);
+      response.send("Profile Already Updated");
     } else {
       response.status(202).json({ message: "Not Updated Yet" });
     }
