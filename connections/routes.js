@@ -27,6 +27,7 @@ const authenticateToken = (request, response, next) => {
         response.status(202);
         response.send("Invalid JWT Token");
       } else {
+        request.email = payload.email;
         next();
       }
     });
@@ -90,6 +91,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
     likes,
     comments,
     htmlFile,
+    savedUsers,
   } = request.body;
 
   connectionBlogs
@@ -104,6 +106,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
       likes: likes,
       comments,
       html: htmlFile,
+      savedUsers: savedUsers,
     })
     .then((res) => {
       response.status(200);
@@ -194,7 +197,6 @@ app.post("/profile/check", authenticateToken, (request, response) => {
 
 app.put("/likes", async (request, response) => {
   const { id } = request.body;
-  console.log(id);
   connectionBlogs
     .findOneAndUpdate({ _id: new ObjectId(id) }, { $inc: { likes: 1 } })
     .then((res) => {
@@ -204,25 +206,52 @@ app.put("/likes", async (request, response) => {
 });
 
 // SAVE BLOGS API
-app.post("/saveblog", async (request, response) => {
-  const { id, blogId } = request.body;
+app.post("/saveblog", authenticateToken, async (request, response) => {
+  const { _id } = request.body;
+  const { email } = request;
 
-  connection
+  await connectionBlogs
     .findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      { $push: { savedBlogs: blogId } },
+      { _id: new ObjectId(_id) },
+      { $push: { savedUsers: email } },
       { $upsert: true },
       { new: true }
     )
     .then((res) => {
       console.log(res);
-      response.status(200).json({ message: "Blog saved to user profile" });
+      response.status(200).send(res);
     })
     .catch((err) => response.send(err));
 });
 
-app.post("/usersaved", async (request, response) => {
-  console.log(request.body);
+//REMOVE SAVED BLOG
+app.put("/saveblog", authenticateToken, async (request, response) => {
+  const { _id } = request.body;
+  const { email } = request;
+
+  await connectionBlogs
+    .findOneAndUpdate(
+      { _id: new ObjectId(_id) },
+      { $pull: { savedUsers: email } }
+    )
+    .then((res) => {
+      console.log(res);
+      response.status(200).send(res);
+    })
+    .catch((err) => response.send(err));
+});
+
+//GET ALL SAVED BLOGS OF USER API
+app.get("/usersaved", authenticateToken, async (request, response) => {
+  const { email } = request;
+  const savedBlogsArray = await Model.find({});
+  let blogs = [];
+  savedBlogsArray.findIndex((each, index) => {
+    if (each._doc.savedUsers.includes(email)) {
+      blogs.push(savedBlogsArray[index]);
+    }
+  });
+  response.status(200).send(blogs);
 });
 
 module.exports = app;
