@@ -140,6 +140,7 @@ app.get("/blogs/:id", (request, response) => {
     .catch((err) => console.log(err));
 });
 
+// ADD COMMENTS TO BLOG API
 app.post("/comments", authenticateToken, (request, response) => {
   const { comment, id, name, dateObject } = request.body;
   connectionBlogs
@@ -156,6 +157,7 @@ app.post("/comments", authenticateToken, (request, response) => {
     .catch((err) => response.send(err));
 });
 
+// UPDATE PROFILE DETAIL
 app.post("/profile", (request, response) => {
   const { designation, gender, name, email, isProfileUpdated } = request.body;
   connection
@@ -171,9 +173,9 @@ app.post("/profile", (request, response) => {
       }
     )
     .then((res) => {
-      response
-        .status(200)
-        .json({ message: "Profile Updated", name, designation });
+      response.status(200).json({
+        message: "Thank you, profile details updated successfully!",
+      });
     })
     .catch((err) => response.send(err));
 });
@@ -183,7 +185,7 @@ app.post("/profile/check", authenticateToken, (request, response) => {
   connection.findOne({ email: email }).then((res) => {
     if (res.isProfileUpdated === true) {
       response.status(200);
-      response.send("Profile Already Updated");
+      response.json({ message: "Profile already updated" });
     } else {
       response.status(202).json({ message: "Not Updated Yet" });
     }
@@ -199,6 +201,28 @@ app.put("/likes", async (request, response) => {
       response.send(res);
     })
     .catch((err) => response.send(err));
+});
+
+// SAVE BLOGS API
+app.post("/saveblog", async (request, response) => {
+  const { id, blogId } = request.body;
+
+  connection
+    .findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      { $push: { savedBlogs: blogId } },
+      { $upsert: true },
+      { new: true }
+    )
+    .then((res) => {
+      console.log(res);
+      response.status(200).json({ message: "Blog saved to user profile" });
+    })
+    .catch((err) => response.send(err));
+});
+
+app.post("/usersaved", async (request, response) => {
+  console.log(request.body);
 });
 
 module.exports = app;
