@@ -71,7 +71,7 @@ app.put("/users", async (request, response) => {
 });
 
 app.get("/blogs", async (request, response) => {
-  const blogsArray = await Model.find({}).sort({ date: -1 });
+  const blogsArray = await Model.find({}).sort({ date: 1 });
   try {
     response.send(blogsArray);
   } catch (error) {
@@ -122,9 +122,9 @@ app.post("/blogs", authenticateToken, async (request, response) => {
 app.get("/blogs/filter", async (request, response) => {
   const { category } = request.query;
   if (category === "All") {
-    var query = Model.find({}).sort({ date: -1 });
+    var query = Model.find({}).sort({ date: 1 });
   } else {
-    var query = Model.find({ category: category }).sort({ date: -1 });
+    var query = Model.find({ category: category }).sort({ date: 1 });
   }
   const blogsByCategory = await query;
   try {
@@ -183,12 +183,13 @@ app.post("/profile", (request, response) => {
     .catch((err) => response.send(err));
 });
 
-app.post("/profile/check", authenticateToken, (request, response) => {
-  const { email } = request.body;
+app.get("/profile/check", authenticateToken, (request, response) => {
+  const { email } = request;
   connection.findOne({ email: email }).then((res) => {
+    console.log(res);
     if (res.isProfileUpdated === true) {
       response.status(200);
-      response.json({ message: "Profile already updated" });
+      response.json({ message: "Profile already updated", res });
     } else {
       response.status(202).json({ message: "Not Updated Yet" });
     }
