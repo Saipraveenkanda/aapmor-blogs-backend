@@ -6,7 +6,6 @@ const getOtp = () => {
   let otp = "";
   for (i = 0; i < 6; i++) {
     const randomNumber = Math.floor(Math.random() * numbers.length);
-    console.log(randomNumber);
     otp += randomNumber;
   }
   return otp;
