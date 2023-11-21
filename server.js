@@ -6,9 +6,7 @@ const app = express();
 app.use(express.json({ limit: "50mb" }));
 
 app.use(cors());
-mongoose.connect(
-  "mongodb+srv://aapmorblogs:aapmorblogs@aapmorblogsdb.pyyvcvm.mongodb.net/aapmorBlogsDb"
-);
+mongoose.connect("mongodb://192.168.0.119:27017/aapmorBlogsDb");
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", () => {
