@@ -1,5 +1,20 @@
 const numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
-const getCaps = () => {
+
+//NEW LOGIC FOR GETTING ONLY NUMBERS IN OTP
+
+const getOtp = () => {
+  let otp = "";
+  for (i = 0; i < 6; i++) {
+    const randomNumber = Math.floor(Math.random() * numbers.length);
+    console.log(randomNumber);
+    otp += randomNumber;
+  }
+  return otp;
+};
+
+//OLD LOGIC FOR GETTING ALL CHARACTERS IN OTP
+
+/* const getCaps = () => {
   let caps = [];
   for (i = 65; i <= 90; i++) {
     caps.push(String.fromCharCode(i));
@@ -13,9 +28,9 @@ const getSmalls = () => {
     smalls.push(String.fromCharCode(i));
   }
   return smalls[Math.floor(Math.random() * smalls.length)];
-};
+}; */
 
-const getOtp = () => {
+/* const getOtp = () => {
   const randomNumber = Math.floor(Math.random() * numbers.length);
   const randomSmall = getSmalls();
   const randomCaps = getCaps();
@@ -29,6 +44,6 @@ const getOtp = () => {
     otp += randomOtp;
   }
   return otp;
-};
+}; */
 
 exports.getOtp = getOtp;
