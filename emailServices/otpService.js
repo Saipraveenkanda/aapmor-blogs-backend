@@ -20,7 +20,7 @@ let transporter = nodemailer.createTransport({
 const sendEmail = expressAsyncHandler(async (request, response) => {
   const { email } = request.body;
   const otpCode = getOtp();
-  console.log(otpCode);
+  // console.log(otpCode);
   const message = `<p>
   Dear User,<br/>
   To ensure the security of your account, we have implemented a one-time password (OTP) verification for logging into our blog application.
