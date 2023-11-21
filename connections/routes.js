@@ -218,7 +218,6 @@ app.post("/saveblog", authenticateToken, async (request, response) => {
       { new: true }
     )
     .then((res) => {
-      console.log(res);
       response.status(200).send(res);
     })
     .catch((err) => response.send(err));
@@ -235,7 +234,6 @@ app.put("/saveblog", authenticateToken, async (request, response) => {
       { $pull: { savedUsers: email } }
     )
     .then((res) => {
-      console.log(res);
       response.status(200).send(res);
     })
     .catch((err) => response.send(err));
