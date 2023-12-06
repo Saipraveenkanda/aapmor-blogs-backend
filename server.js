@@ -4,9 +4,12 @@ const cors = require("cors");
 const Router = require("./connections/routes");
 const app = express();
 app.use(express.json({ limit: "50mb" }));
-
+//"mongodb://192.168.0.122:27017/aapmorBlogsDb"
 app.use(cors());
-mongoose.connect("mongodb://192.168.0.119:27017/aapmorBlogsDb");
+mongoose.connect(
+  "mongodb://192.168.0.122:27017/aapmorBlogsDb" ||
+    "mongodb+srv://aapmorblogs:aapmorblogs@aapmorblogsdb.pyyvcvm.mongodb.net/"
+);
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
 db.once("open", () => {
