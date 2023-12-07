@@ -120,7 +120,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
 //category Api
 
 app.get("/blogs/filter", async (request, response) => {
-  const { category } = request.query;
+  const { category = "All" } = request.query;
   if (category === "All") {
     var query = Model.find({}).sort({ date: 1 });
   } else {
