@@ -1,9 +1,8 @@
 const { MongoClient } = require("mongodb");
-const client = new MongoClient(
-  "mongodb://192.168.0.122:27017/aapmorBlogsDb" ||
-    "mongodb+srv://aapmorblogs:aapmorblogs@aapmorblogsdb.pyyvcvm.mongodb.net/"
-);
+require("dotenv").config();
 
+const client = new MongoClient(process.env.MONGODB_URL || "mongodb://192.168.0.122:27017/aapmorBlogsDb");
+// "mongodb://192.168.0.122:27017/aapmorBlogsDb" ||
 const dataBase = "aapmorBlogsDb";
 const collection = "users";
 
