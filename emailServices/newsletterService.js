@@ -37,7 +37,7 @@ const replaceHtml = (content) => {
     /<img[^>]*\ssrc="[^"]*"/,
     '<img src="' + blogImage + '"'
   );
-  let newBlogLink = `http://192.168.0.116:3000/blogs/${blogId}`;
+  let newBlogLink = `http://192.168.0.122/blogs/${blogId}`;
   let resultHtml = finalHtml.replace(
     /<a[^>]*\shref="[^"]*"/,
     '<a href="' + newBlogLink + '"'
