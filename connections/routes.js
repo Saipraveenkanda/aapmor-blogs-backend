@@ -71,7 +71,7 @@ app.put("/users", async (request, response) => {
 });
 
 app.get("/blogs", async (request, response) => {
-  const blogsArray = await Model.find({}).sort({ date: 1 });
+  const blogsArray = await Model.find({});
   try {
     response.send(blogsArray);
   } catch (error) {
@@ -122,9 +122,9 @@ app.post("/blogs", authenticateToken, async (request, response) => {
 app.get("/blogs/filter", async (request, response) => {
   const { category = "All" } = request.query;
   if (category === "All") {
-    var query = Model.find({}).sort({ date: 1 });
+    var query = Model.find({});
   } else {
-    var query = Model.find({ category: category }).sort({ date: 1 });
+    var query = Model.find({ category: category });
   }
   const blogsByCategory = await query;
   try {
