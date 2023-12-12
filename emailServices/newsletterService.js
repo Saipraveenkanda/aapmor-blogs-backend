@@ -64,12 +64,14 @@ const sendBlogsMail = expressAsyncHandler(async (request, response) => {
     html: resultHtml,
   };
 
-  transporter.sendMail(mailOptions, async (error, info) => {
+  //commenting sending emails to all users for testing
+
+  /* transporter.sendMail(mailOptions, async (error, info) => {
     if (error) {
       response.send(error);
     } else {
       response.send(info);
     }
-  });
+  }); */
 });
 module.exports = { sendBlogsMail };
