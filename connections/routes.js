@@ -48,7 +48,7 @@ app.post("/api/login", async (request, response) => {
       response.status(200).json({ jwt_token, email });
     } else {
       response.status(202);
-      response.json({ message: "Invalid Otp" });
+      response.json({ message: "Invalid OTP" });
     }
   });
 });
@@ -186,7 +186,6 @@ app.post("/profile", (request, response) => {
 app.get("/profile/check", authenticateToken, (request, response) => {
   const { email } = request;
   connection.findOne({ email: email }).then((res) => {
-    console.log(res);
     if (res.isProfileUpdated === true) {
       response.status(200);
       response.json({ message: "Profile already updated", res });

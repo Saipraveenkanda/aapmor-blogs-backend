@@ -59,7 +59,7 @@ const sendEmail = expressAsyncHandler(async (request, response) => {
               response.json({ message: `OTP sent to ${email}` });
             });
         } else {
-          console.log("User doesnn't exist, creating one in database");
+          console.log("User does not exist, creating one in database");
           connection
             .insertOne({
               email: email,
