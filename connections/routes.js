@@ -9,7 +9,7 @@ const { ObjectId } = require("mongodb");
 const { sendBlogsMail } = require("../emailServices/newsletterService");
 
 app.post("/sendEmail", sendEmail);
-app.post("/usermail", sendBlogsMail);
+app.post("/publishBlog", sendBlogsMail);
 
 //middleware
 const authenticateToken = (request, response, next) => {

@@ -37,7 +37,7 @@ const replaceHtml = (content) => {
     /<img[^>]*\ssrc="[^"]*"/,
     '<img src="' + blogImage + '"'
   );
-  let newBlogLink = `http://192.168.0.122/blogs/${blogId}`;
+  let newBlogLink = `http://localhost:3000/blogs/${blogId}`;
   let resultHtml = finalHtml.replace(
     /<a[^>]*\shref="[^"]*"/,
     '<a href="' + newBlogLink + '"'
@@ -66,12 +66,12 @@ const sendBlogsMail = expressAsyncHandler(async (request, response) => {
 
   //commenting sending emails to all users for testing
 
-  /* transporter.sendMail(mailOptions, async (error, info) => {
+  transporter.sendMail(mailOptions, async (error, info) => {
     if (error) {
       response.send(error);
     } else {
       response.send(info);
     }
-  }); */
+  });
 });
 module.exports = { sendBlogsMail };
