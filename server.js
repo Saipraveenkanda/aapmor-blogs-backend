@@ -19,6 +19,9 @@ db.once("open", () => {
 });
 
 app.use(Router);
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
 app.listen(3005, () => {
   console.log("server running at 3005");
 });
