@@ -127,8 +127,9 @@ app.get("/blogs/filter", async (request, response) => {
     var query = Model.find({ category: category });
   }
   const blogsByCategory = await query;
+  const reversedBlogs = blogsByCategory.reverse();
   try {
-    response.send(blogsByCategory);
+    response.send(reversedBlogs);
   } catch (error) {
     response.send(error);
   }
