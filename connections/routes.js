@@ -2,12 +2,14 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
+const { put } = require("@vercel/blob");
 const { connection, connectionBlogs } = require("./database");
 const { Model } = require("./schema");
 const { sendEmail } = require("../emailServices/otpService");
 const { ObjectId } = require("mongodb");
 const { sendBlogsMail } = require("../emailServices/newsletterService");
-
+const multer = require("multer");
+const path = require("path");
 app.post("/sendEmail", sendEmail);
 app.post("/publishBlog", sendBlogsMail);
 
@@ -252,5 +254,58 @@ app.get("/usersaved", authenticateToken, async (request, response) => {
   });
   response.status(200).send(blogs);
 });
+
+/* Save thumbnail and profile pic to blob storage */
+
+const upload = multer({
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const fileTypes = /jpeg|jpg|png|webp|gif/;
+    const extName = fileTypes.test(
+      path.extname(file.originalname).toLowerCase()
+    );
+    const mimeType = fileTypes.test(file.mimetype);
+
+    if (extName && mimeType) {
+      return cb(null, true);
+    } else {
+      cb(new Error("Only images are allowed"));
+    }
+  },
+});
+app.post(
+  "/post/blogthumb",
+  authenticateToken,
+  upload.single("image"),
+  async (request, response) => {
+    const uploadUrl = process.env.UPLOAD_URL;
+    const writeToken = process.env.BLOB_READ_WRITE_TOKEN;
+    console.log(uploadUrl, writeToken);
+
+    try {
+      const file = request.file;
+
+      if (!file) {
+        throw new Error("File not found in the request.");
+      }
+
+      const filename = "test"; // Adjust this to use a dynamic filename if needed
+      const blob = await put(filename, file.buffer, {
+        access: "public",
+        contentType: file.mimetype,
+      });
+
+      console.log(blob, "RESPONSE");
+
+      const { url } = blob; // Adjust based on the response format from `put`
+      console.log("Uploaded Image URL:", url);
+
+      return response.status(200).json({ url });
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      response.status(500).json({ error: error.message });
+    }
+  }
+);
 
 module.exports = app;
