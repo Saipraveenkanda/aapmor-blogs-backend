@@ -21,7 +21,17 @@ let transporter = nodemailer.createTransport({
 
 const replaceHtml = (content) => {
   let modifiedHtml;
-  const { title, description, dateObject, blogImage, blogId } = content;
+  let modifiedHtml2;
+  const {
+    title,
+    description,
+    dateObject,
+    blogImage,
+    blogId,
+    name,
+    role,
+    editorHtml,
+  } = content;
   const replaceObj = {
     uniquetitle: title,
     uniquedescription: description,
@@ -33,7 +43,11 @@ const replaceHtml = (content) => {
       return replaceObj[matched];
     }
   );
-  let finalHtml = modifiedHtml.replace(
+  modifiedHtml2 = modifiedHtml.replace(
+    /Weekly Newsletter/gi,
+    "Discover " + name + "'s Latest Blog : Click to Read Now!"
+  );
+  let finalHtml = modifiedHtml2.replace(
     /<img[^>]*\ssrc="[^"]*"/,
     '<img src="' + blogImage + '"'
   );
@@ -56,10 +70,10 @@ const sendBlogsMail = expressAsyncHandler(async (request, response) => {
   userMap.forEach((user) => {
     emailsArray.push(user._doc.email);
   });
-
   var mailOptions = {
     from: process.env.SMTP_MAIL,
     to: emailsArray,
+    // to: "praveensaik@aapmor.com",
     subject: "Stay Connected: Your Weekly Company Updates",
     html: resultHtml,
   };

@@ -178,9 +178,12 @@ app.post("/profile", (request, response) => {
         },
       }
     )
-    .then((res) => {
+    .then(async (res) => {
+      const profile = await connection.findOne({ email: email });
+      console.log(profile, "PROFILE");
       response.status(200).json({
         message: "Thank you, profile details updated successfully!",
+        profile,
       });
     })
     .catch((err) => response.send(err));
