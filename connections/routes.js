@@ -25,6 +25,8 @@ const authenticateToken = (request, response, next) => {
     response.send("Authorization failed");
   } else {
     jwt.verify(jwtToken, "ABPPBH_ST", (error, payload) => {
+      console.log(payload, "PAYLOAD");
+
       if (error) {
         response.status(202);
         response.send("Invalid JWT Token");
@@ -201,14 +203,57 @@ app.get("/profile/check", authenticateToken, (request, response) => {
   });
 });
 
-app.put("/likes", async (request, response) => {
-  const { id } = request.body;
-  connectionBlogs
-    .findOneAndUpdate({ _id: new ObjectId(id) }, { $inc: { likes: 1 } })
-    .then((res) => {
-      response.send(res);
-    })
-    .catch((err) => response.send(err));
+// app.put("/likes", async (request, response) => {
+//   const { id } = request.body;
+//   connectionBlogs
+//     .findOneAndUpdate({ _id: new ObjectId(id) }, { $inc: { likes: 1 } })
+//     .then((res) => {
+//       response.send(res);
+//     })
+//     .catch((err) => response.send(err));
+// });
+
+app.put("/likes", authenticateToken, async (request, response) => {
+  const { id, name } = request.body;
+  const { email } = request;
+  const likeObject = {
+    name,
+    email,
+    time: new Date(),
+  };
+
+  if (!id) {
+    return response.status(400).json({ error: "Blog ID is required." });
+  }
+
+  try {
+    const blog = await connectionBlogs.findOne({ _id: new ObjectId(id) });
+    if (!blog) {
+      return response.status(404).json({ error: "Blog not found." });
+    }
+    // const userLiked = blog.likes?.includes(email);
+    const userLiked = blog.likes?.some((like) => like.email === email);
+
+    const updateQuery = userLiked
+      ? { $pull: { likes: { name } } } // Unlike (remove the like object by matching name)
+      : { $addToSet: { likes: likeObject } }; // Like (add new like object)
+
+    const updatedBlog = await connectionBlogs.findOneAndUpdate(
+      { _id: new ObjectId(id) },
+      updateQuery,
+      { returnDocument: "after" } // Return updated document
+    );
+
+    response.json({
+      success: true,
+      message: userLiked ? "Unliked successfully" : "Liked successfully",
+      likes: updatedBlog.likes,
+    });
+  } catch (error) {
+    response
+      .status(500)
+      .json({ error: "Something went wrong", details: error });
+  }
 });
 
 // SAVE BLOGS API
