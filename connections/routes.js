@@ -10,6 +10,7 @@ const { ObjectId } = require("mongodb");
 const { sendBlogsMail } = require("../emailServices/newsletterService");
 const multer = require("multer");
 const path = require("path");
+const { sendCommentMail } = require("../emailServices/notifyCommentMail");
 app.post("/sendEmail", sendEmail);
 app.post("/publishBlog", sendBlogsMail);
 
@@ -97,6 +98,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
     htmlFile,
     savedUsers,
   } = request.body;
+  const { email } = request;
 
   connectionBlogs
     .insertOne({
@@ -111,6 +113,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
       comments,
       html: htmlFile,
       savedUsers: savedUsers,
+      email,
     })
     .then((res) => {
       response.status(200);
@@ -149,8 +152,9 @@ app.get("/blogs/:id", (request, response) => {
 });
 
 // ADD COMMENTS TO BLOG API
-app.post("/comments", authenticateToken, (request, response) => {
+app.post("/comments", authenticateToken, async (request, response) => {
   const { comment, id, name, dateObject } = request.body;
+  const blog = await connectionBlogs.findOne({ _id: new ObjectId(id) });
   connectionBlogs
     .findOneAndUpdate(
       { _id: new ObjectId(id) },
@@ -158,7 +162,8 @@ app.post("/comments", authenticateToken, (request, response) => {
       { $upsert: true },
       { new: true }
     )
-    .then((res) => {
+    .then(async (res) => {
+      await sendCommentMail(blog, comment, id);
       console.log(res);
       response.status(200).json({ message: "new comment added" });
     })
