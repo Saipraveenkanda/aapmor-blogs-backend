@@ -113,7 +113,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
       comments,
       html: htmlFile,
       savedUsers: savedUsers,
-      email,
+      email:email,
     })
     .then((res) => {
       response.status(200);

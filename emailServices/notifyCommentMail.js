@@ -15,6 +15,7 @@ let transporter = nodemailer.createTransport({
 
 const sendCommentMail = expressAsyncHandler(async (blog, comment, id) => {
   const { email, username, title } = blog;
+  console.log(email, "FROM BLOG");
   const message = `<p>
     Hi ${username},
     
@@ -42,7 +43,6 @@ const sendCommentMail = expressAsyncHandler(async (blog, comment, id) => {
   var mailOptions = {
     from: process.env.SMTP_MAIL,
     to: email,
-    // to: "praveensaik@aapmor.com",
     subject: "New Comment on Your Blog Post - Check It Out!",
     html: message,
   };
