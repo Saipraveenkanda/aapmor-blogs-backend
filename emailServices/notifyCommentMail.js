@@ -11,6 +11,8 @@ let transporter = nodemailer.createTransport({
     user: process.env.SMTP_MAIL,
     pass: process.env.SMTP_PASSWORD,
   },
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
 });
 
 const sendCommentMail = expressAsyncHandler(async (blog, comment, id) => {
@@ -47,6 +49,11 @@ const sendCommentMail = expressAsyncHandler(async (blog, comment, id) => {
     html: message,
   };
 
-  transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully");
+  } catch (error) {
+    console.error("Error sending email:", error);
+  }
 });
 module.exports = { sendCommentMail };

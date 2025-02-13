@@ -113,7 +113,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
       comments,
       html: htmlFile,
       savedUsers: savedUsers,
-      email:email,
+      email: email,
     })
     .then((res) => {
       response.status(200);
@@ -163,11 +163,10 @@ app.post("/comments", authenticateToken, async (request, response) => {
       { new: true }
     )
     .then(async (res) => {
-      await sendCommentMail(blog, comment, id);
-      console.log(res);
       response.status(200).json({ message: "new comment added" });
     })
     .catch((err) => response.send(err));
+  await sendCommentMail(blog, comment, id);
 });
 
 // UPDATE PROFILE DETAIL
