@@ -84,6 +84,7 @@ app.get("/blogs", async (request, response) => {
   }
 });
 
+/* CREATE NEW BLOG */
 app.post("/blogs", authenticateToken, async (request, response) => {
   const {
     title,
@@ -100,28 +101,78 @@ app.post("/blogs", authenticateToken, async (request, response) => {
   } = request.body;
   const { email } = request;
 
-  connectionBlogs
-    .insertOne({
-      title: title,
-      description: description,
-      category: category,
-      blogImage: blogImage,
-      username: username,
-      userrole: userrole,
-      date: date,
-      likes: likes,
+  try {
+    const blogResult = await connectionBlogs.insertOne({
+      title,
+      description,
+      category,
+      blogImage,
+      username,
+      userrole,
+      date,
+      likes,
       comments,
       html: htmlFile,
-      savedUsers: savedUsers,
-      email: email,
-    })
-    .then((res) => {
-      response.status(200);
-      response.json({ message: res.insertedId });
-    })
-    .catch((err) => {
-      response.send(err);
+      savedUsers,
+      email,
     });
+
+    const blogId = blogResult.insertedId;
+
+    await connection.updateOne(
+      { email: email },
+      { $push: { createdBlogs: blogId } }
+    );
+
+    response.status(200).json({ message: blogId });
+  } catch (err) {
+    response.status(500).send(err);
+  }
+});
+
+/* UPDATE EXISTING BLOG */
+app.put("/blogs/:id", authenticateToken, async (request, response) => {
+  const blogId = request.params.id;
+  const updatedData = request.body;
+  try {
+    const updateResult = await connectionBlogs.updateOne(
+      { _id: new ObjectId(blogId) },
+      { $set: updatedData }
+    );
+
+    if (updateResult.matchedCount === 0) {
+      return response.status(404).json({ message: "Blog not found" });
+    }
+
+    response.status(200).json({ message: "Blog updated successfully" });
+  } catch (err) {
+    response.status(500).send(err);
+  }
+});
+
+/* DELETE BLOG */
+app.delete("/blogs/:id", authenticateToken, async (request, response) => {
+  const blogId = request.params.id;
+  const { email } = request;
+
+  try {
+    const deleteResult = await connectionBlogs.deleteOne({
+      _id: new ObjectId(blogId),
+    });
+
+    if (deleteResult.deletedCount === 0) {
+      return response.status(404).json({ message: "Blog not found" });
+    }
+
+    await connection.updateOne(
+      { email: email },
+      { $pull: { createdBlogs: new ObjectId(blogId) } }
+    );
+
+    response.status(200).json({ message: "Blog deleted successfully" });
+  } catch (err) {
+    response.status(500).send(err);
+  }
 });
 
 //category Api
@@ -147,7 +198,14 @@ app.get("/blogs/:id", (request, response) => {
   const { id } = request.params;
   connectionBlogs
     .findOne({ _id: new ObjectId(id) })
-    .then((res) => response.send(res))
+    .then((res) => {
+      console.log(res);
+      if (res) {
+        response.send(res);
+      } else {
+        response.status(500).send({});
+      }
+    })
     .catch((err) => console.log(err));
 });
 
