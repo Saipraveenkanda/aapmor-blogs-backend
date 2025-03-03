@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const app = express();
 const { put } = require("@vercel/blob");
 const { connection, connectionBlogs } = require("./database");
-const { Model } = require("./schema");
+const { Model, Winner } = require("./schema");
 const { sendEmail } = require("../emailServices/otpService");
 const { ObjectId } = require("mongodb");
 const { sendBlogsMail } = require("../emailServices/newsletterService");
@@ -417,5 +417,44 @@ app.post(
     }
   }
 );
+
+app.post("/api/winners", authenticateToken, async (req, res) => {
+  const { email } = req;
+  console.log(email, "ADMIN EMAIL");
+  const user = await connection.findOne({ email: email });
+  if (user?.admin === true) {
+    try {
+      const winner = new Winner(req.body);
+      await winner.save();
+      res.status(201).json({ message: "Winner saved successfully!" });
+    } catch (error) {
+      res.status(500).json({ error: "Error saving winner" });
+    }
+  } else {
+    res.status(403).json({ error: "No admin rights to perfrom this action" });
+  }
+});
+
+app.get("/api/winners/current", async (req, res) => {
+  try {
+    const currentMonth = new Intl.DateTimeFormat("en-US", {
+      month: "long",
+    }).format(new Date(new Date().setMonth(new Date().getMonth() - 1)));
+
+    const winner = await Winner.findOne({ month: currentMonth }).sort({
+      _id: -1,
+    });
+
+    if (!winner) {
+      return res
+        .status(200)
+        .json({ message: "No winner found for this month." });
+    }
+
+    res.json(winner);
+  } catch (error) {
+    res.status(500).json({ error: "Error fetching winner of the month" });
+  }
+});
 
 module.exports = app;
