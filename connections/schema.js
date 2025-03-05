@@ -8,6 +8,7 @@ const winnerSchema = new mongoose.Schema({
   blogTitle: { type: String, required: true },
   blogLink: { type: String, required: true },
   month: { type: String, required: true },
+  blogId: { type: String, required: true },
 });
 
 const Winner = mongoose.model("Winner", winnerSchema);

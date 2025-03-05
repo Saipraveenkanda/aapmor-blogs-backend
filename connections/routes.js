@@ -265,15 +265,49 @@ app.get("/profile/check", authenticateToken, (request, response) => {
   });
 });
 
-// app.put("/likes", async (request, response) => {
-//   const { id } = request.body;
-//   connectionBlogs
-//     .findOneAndUpdate({ _id: new ObjectId(id) }, { $inc: { likes: 1 } })
-//     .then((res) => {
-//       response.send(res);
-//     })
-//     .catch((err) => response.send(err));
+// app.put("/likes", authenticateToken, async (request, response) => {
+//   const { id, name } = request.body;
+//   const { email } = request;
+//   const likeObject = {
+//     name,
+//     email,
+//     time: new Date(),
+//   };
+
+//   if (!id) {
+//     return response.status(400).json({ error: "Blog ID is required." });
+//   }
+
+//   try {
+//     const blog = await connectionBlogs.findOne({ _id: new ObjectId(id) });
+//     if (!blog) {
+//       return response.status(404).json({ error: "Blog not found." });
+//     }
+//     const userLiked = blog.likes?.some((like) => like.email === email);
+
+//     const updateQuery = userLiked
+//       ? { $pull: { likes: { name } } }
+//       : { $addToSet: { likes: likeObject } };
+
+//     const updatedBlog = await connectionBlogs.findOneAndUpdate(
+//       { _id: new ObjectId(id) },
+//       updateQuery,
+//       { returnDocument: "after" }
+//     );
+
+//     response.json({
+//       success: true,
+//       message: userLiked ? "Unliked successfully" : "Liked successfully",
+//       likes: updatedBlog.likes,
+//     });
+//   } catch (error) {
+//     response
+//       .status(500)
+//       .json({ error: "Something went wrong", details: error });
+//   }
 // });
+
+// SAVE BLOGS API
 
 app.put("/likes", authenticateToken, async (request, response) => {
   const { id, name } = request.body;
@@ -293,24 +327,43 @@ app.put("/likes", authenticateToken, async (request, response) => {
     if (!blog) {
       return response.status(404).json({ error: "Blog not found." });
     }
-    // const userLiked = blog.likes?.includes(email);
+
     const userLiked = blog.likes?.some((like) => like.email === email);
 
-    const updateQuery = userLiked
-      ? { $pull: { likes: { name } } } // Unlike (remove the like object by matching name)
-      : { $addToSet: { likes: likeObject } }; // Like (add new like object)
+    if (userLiked) {
+      // Unlike (remove like)
+      const updatedBlog = await connectionBlogs.findOneAndUpdate(
+        { _id: new ObjectId(id), "likes.email": email }, // Ensure the user actually liked it
+        { $pull: { likes: { email } } }, // Remove like by email
+        { returnDocument: "after" }
+      );
 
-    const updatedBlog = await connectionBlogs.findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      updateQuery,
-      { returnDocument: "after" } // Return updated document
-    );
+      return response.json({
+        success: true,
+        message: "Unliked successfully",
+        likes: updatedBlog.likes,
+      });
+    } else {
+      // Like (add only if not already liked)
+      const updatedBlog = await connectionBlogs.findOneAndUpdate(
+        { _id: new ObjectId(id), "likes.email": { $ne: email } }, // Ensure user hasn't liked
+        { $push: { likes: likeObject } }, // Add like
+        { returnDocument: "after" }
+      );
 
-    response.json({
-      success: true,
-      message: userLiked ? "Unliked successfully" : "Liked successfully",
-      likes: updatedBlog.likes,
-    });
+      if (!updatedBlog) {
+        return response.json({
+          success: false,
+          message: "Already liked, ignoring duplicate request",
+        });
+      }
+
+      return response.json({
+        success: true,
+        message: "Liked successfully",
+        likes: updatedBlog.likes,
+      });
+    }
   } catch (error) {
     response
       .status(500)
@@ -318,7 +371,6 @@ app.put("/likes", authenticateToken, async (request, response) => {
   }
 });
 
-// SAVE BLOGS API
 app.post("/saveblog", authenticateToken, async (request, response) => {
   const { _id } = request.body;
   const { email } = request;
@@ -420,12 +472,16 @@ app.post(
 
 app.post("/api/winners", authenticateToken, async (req, res) => {
   const { email } = req;
-  console.log(email, "ADMIN EMAIL");
+  const { blogId } = req.body;
   const user = await connection.findOne({ email: email });
   if (user?.admin === true) {
     try {
       const winner = new Winner(req.body);
       await winner.save();
+      await connectionBlogs.updateOne(
+        { _id: new ObjectId(blogId) },
+        { $set: { isBestBlog: true } }
+      );
       res.status(201).json({ message: "Winner saved successfully!" });
     } catch (error) {
       res.status(500).json({ error: "Error saving winner" });
@@ -441,11 +497,11 @@ app.get("/api/winners/current", async (req, res) => {
       month: "long",
     }).format(new Date(new Date().setMonth(new Date().getMonth() - 1)));
 
-    const winner = await Winner.findOne({ month: currentMonth }).sort({
+    const winner = await Winner.find({ month: currentMonth }).sort({
       _id: -1,
     });
 
-    if (!winner) {
+    if (winner.length === 0) {
       return res
         .status(200)
         .json({ message: "No winner found for this month." });
@@ -454,6 +510,20 @@ app.get("/api/winners/current", async (req, res) => {
     res.json(winner);
   } catch (error) {
     res.status(500).json({ error: "Error fetching winner of the month" });
+  }
+});
+
+app.get("/api/techblogs", async (req, res) => {
+  try {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth(); // Get current month (0-based)
+    const blogs = await Model.find({
+      category: "Technology",
+    }).limit(5);
+    res.status(200).json({ data: blogs });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Error fetching blogs of the month" });
   }
 });
 
