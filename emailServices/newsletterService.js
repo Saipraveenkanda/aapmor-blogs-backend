@@ -51,7 +51,7 @@ const replaceHtml = (content) => {
     /<img[^>]*\ssrc="[^"]*"/,
     '<img src="' + blogImage + '"'
   );
-  let newBlogLink = `https://aapmor-blogs.vercel.app/blogs/${blogId}`;
+  let newBlogLink = `https://blogs.aapmor.com/blogs/${blogId}`;
   let resultHtml = finalHtml.replace(
     /<a[^>]*\shref="[^"]*"/,
     '<a href="' + newBlogLink + '"'

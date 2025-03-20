@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const Router = require("./connections/routes");
 const app = express();
-
+const PORT = process.env.PORT;
 app.use(express.json({ limit: "50mb" }));
 app.use(cors()); // Cors policy
 
@@ -22,8 +22,8 @@ app.use(Router);
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
-app.listen(3005, () => {
-  console.log("server running at 3005");
+app.listen(PORT, () => {
+  console.log(`server running at ${PORT}`);
 });
 
 /* Exporting app */
