@@ -51,16 +51,33 @@ const replaceHtml = (content) => {
     /<img[^>]*\ssrc="[^"]*"/,
     '<img src="' + blogImage + '"'
   );
-  let newBlogLink = `https://blogs.aapmor.com/blogs/${blogId}`;
+  // let newBlogLink = `https://blogs.aapmor.com/blogs/${blogId}`;
+  let newBlogLink = `https://aapmor-blogs.vercel.app/blogs/${blogId}`; //for testing
   let resultHtml = finalHtml.replace(
     /<a[^>]*\shref="[^"]*"/,
     '<a href="' + newBlogLink + '"'
   );
   return resultHtml;
 };
+const blogSubjects = [
+  "Insights Unlocked: A New Blog by One of Your Peers!",
+  "Peer Spotlight: Check Out This Fresh Blog!",
+  "Straight from Your Team: A Blog You Can’t Miss!",
+  "Your Colleague Just Wrote This – Have a Look!",
+  "Fresh Ideas, Fresh Blog – Written by One of You!",
+  "From a Peer, for You: A Blog Worth Reading!",
+  "A Thoughtful Blog by Your Fellow Teammate!",
+  "Someone from Your Team Just Dropped a Blog!",
+  "New Blog Alert: A Peer’s Perspective Awaits!",
+  "One of Your Own Wrote This – Give It a Read!",
+];
+
+function getRandomBlogSubject() {
+  const randomIndex = Math.floor(Math.random() * blogSubjects.length);
+  return blogSubjects[randomIndex];
+}
 
 const sendBlogsMail = expressAsyncHandler(async (request, response) => {
-  // HTML FILE FROM REQUEST BODY
   const content = request.body;
   const resultHtml = replaceHtml(content);
 
@@ -72,13 +89,15 @@ const sendBlogsMail = expressAsyncHandler(async (request, response) => {
   });
   var mailOptions = {
     from: process.env.SMTP_MAIL,
-    to: emailsArray,
-    // to: "praveensaik@aapmor.com",
-    subject: "Stay Connected: Your Weekly Company Updates",
+    // to: emailsArray,
+    to: [
+      "praveensaik@aapmor.com",
+      "ganeshg@aapmor.com",
+      "rajeswarivalagandlak@aapmor.com",
+    ],
+    subject: getRandomBlogSubject(),
     html: resultHtml,
   };
-
-  //commenting sending emails to all users for testing
 
   transporter.sendMail(mailOptions, async (error, info) => {
     if (error) {
