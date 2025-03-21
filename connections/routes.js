@@ -442,7 +442,6 @@ app.post(
   async (request, response) => {
     const uploadUrl = process.env.UPLOAD_URL;
     const writeToken = process.env.BLOB_READ_WRITE_TOKEN;
-    console.log(uploadUrl, writeToken);
 
     try {
       const file = request.file;
@@ -456,8 +455,6 @@ app.post(
         access: "public",
         contentType: file.mimetype,
       });
-
-      console.log(blob, "RESPONSE");
 
       const { url } = blob; // Adjust based on the response format from `put`
       console.log("Uploaded Image URL:", url);

@@ -19,7 +19,7 @@ let transporter = nodemailer.createTransport({
   },
 });
 
-const replaceHtml = (content) => {
+const replaceHtml = (content, origin) => {
   let modifiedHtml;
   let modifiedHtml2;
   const {
@@ -52,7 +52,7 @@ const replaceHtml = (content) => {
     '<img src="' + blogImage + '"'
   );
   // let newBlogLink = `https://blogs.aapmor.com/blogs/${blogId}`;
-  let newBlogLink = `https://aapmor-blogs.vercel.app/blogs/${blogId}`; //for testing
+  let newBlogLink = `${origin}/blogs/${blogId}`; //for testing
   let resultHtml = finalHtml.replace(
     /<a[^>]*\shref="[^"]*"/,
     '<a href="' + newBlogLink + '"'
@@ -78,8 +78,11 @@ function getRandomBlogSubject() {
 }
 
 const sendBlogsMail = expressAsyncHandler(async (request, response) => {
+  const referer = request.get("Referer"); // Full URL where the request originated
+  const origin = request.get("Origin");
+  console.log(origin, referer);
   const content = request.body;
-  const resultHtml = replaceHtml(content);
+  const resultHtml = replaceHtml(content, origin);
 
   // CODE FOR GETTING ALL USERS EMAIL ID
   let userMap = await EmailModel.find({}, { _id: 0 });
