@@ -76,7 +76,7 @@ app.put("/users", async (request, response) => {
 });
 
 app.get("/blogs", async (request, response) => {
-  const blogsArray = await Model.find({});
+  const blogsArray = await Model.find({}, { html: 0 });
   try {
     response.send(blogsArray);
   } catch (error) {
