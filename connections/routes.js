@@ -11,9 +11,10 @@ const { sendBlogsMail } = require("../emailServices/newsletterService");
 const multer = require("multer");
 const path = require("path");
 const { sendCommentMail } = require("../emailServices/notifyCommentMail");
+const { summarizeText } = require("./summarizeContent");
 app.post("/sendEmail", sendEmail);
 app.post("/publishBlog", sendBlogsMail);
-
+app.post("/summarize", summarizeText);
 //middleware
 const authenticateToken = (request, response, next) => {
   let jwtToken;
