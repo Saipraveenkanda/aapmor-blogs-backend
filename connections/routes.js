@@ -77,8 +77,9 @@ app.put("/users", async (request, response) => {
 
 app.get("/blogs", async (request, response) => {
   const blogsArray = await Model.find({}, { html: 0 });
+  const blogs = blogsArray.reverse();
   try {
-    response.send(blogsArray);
+    response.send(blogs);
   } catch (error) {
     response.send(error);
   }
