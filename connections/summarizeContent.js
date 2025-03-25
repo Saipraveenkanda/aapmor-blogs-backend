@@ -14,9 +14,11 @@
 // }
 
 const axios = require("axios");
+require("dotenv").config();
 exports.summarizeText = async (req, res) => {
   try {
     const { text } = req.body;
+    console.log(process.env.GROQ_API_KEY, "GROQ_API_KEY");
 
     // if (!text || text.trim().length === 0) {
     //   return res
