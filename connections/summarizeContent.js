@@ -1,3 +1,5 @@
+require("dotenv").config();
+process.env.HF_HOME = "/tmp";
 let summarizer;
 
 async function loadSummarizer() {

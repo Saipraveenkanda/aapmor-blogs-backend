@@ -9,7 +9,12 @@ app.use(cors()); // Cors policy
 
 /* MongoDB Connection */
 // mongoose.connect("mongodb://192.168.0.122:27017/aapmorBlogsDb");
-mongoose.connect(process.env.MONGO_ATLAS_CONN_URL);
+mongoose.connect(process.env.MONGO_ATLAS_CONN_URL, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 5000, // Time before failing
+  socketTimeoutMS: 45000, // Keep-alive timeout
+});
 /* Mongo connection function */
 const db = mongoose.connection;
 db.on("error", console.error.bind(console, "connection error:"));
