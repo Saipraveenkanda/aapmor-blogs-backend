@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const app = express();
 const { put } = require("@vercel/blob");
 const { connection, connectionBlogs } = require("./database");
-const { Model, Winner } = require("./schema");
+const { Model, Winner, CommentModel } = require("./schema");
 const { sendEmail } = require("../emailServices/otpService");
 const { ObjectId } = require("mongodb");
 const { sendBlogsMail } = require("../emailServices/newsletterService");
@@ -12,9 +12,11 @@ const multer = require("multer");
 const path = require("path");
 const { sendCommentMail } = require("../emailServices/notifyCommentMail");
 const { summarizeText } = require("./summarizeContent");
+const { generateUserBio } = require("./generateAutoBio");
 app.post("/sendEmail", sendEmail);
 app.post("/publishBlog", sendBlogsMail);
 app.post("/summarize", summarizeText);
+
 //middleware
 const authenticateToken = (request, response, next) => {
   let jwtToken;
@@ -27,8 +29,6 @@ const authenticateToken = (request, response, next) => {
     response.send("Authorization failed");
   } else {
     jwt.verify(jwtToken, "ABPPBH_ST", (error, payload) => {
-      console.log(payload, "PAYLOAD");
-
       if (error) {
         response.status(202);
         response.send("Invalid JWT Token");
@@ -39,7 +39,7 @@ const authenticateToken = (request, response, next) => {
     });
   }
 };
-
+app.post("/generateBio", generateUserBio);
 // Login API
 
 app.post("/api/login", async (request, response) => {
@@ -201,7 +201,6 @@ app.get("/blogs/:id", (request, response) => {
   connectionBlogs
     .findOne({ _id: new ObjectId(id) })
     .then((res) => {
-      console.log(res);
       if (res) {
         response.send(res);
       } else {
@@ -230,29 +229,68 @@ app.post("/comments", authenticateToken, async (request, response) => {
 });
 
 // UPDATE PROFILE DETAIL
-app.post("/profile", (request, response) => {
-  const { designation, gender, name, email, isProfileUpdated } = request.body;
-  connection
-    .updateOne(
+// app.post("/profile", (request, response) => {
+//   const { designation, gender, name, email, isProfileUpdated } = request.body;
+//   connection
+//     .updateOne(
+//       { email: email },
+//       {
+//         $set: {
+//           name: name,
+//           designation: designation,
+//           gender: gender,
+//           isProfileUpdated: isProfileUpdated,
+//         },
+//       }
+//     )
+//     .then(async (res) => {
+//       const profile = await connection.findOne({ email: email });
+//       console.log(profile, "PROFILE");
+//       response.status(200).json({
+//         message: "Thank you, profile details updated successfully!",
+//         profile,
+//       });
+//     })
+//     .catch((err) => response.send(err));
+// });
+app.post("/profile", authenticateToken, async (request, response) => {
+  try {
+    const { name, designation, gender, profileImage, bio, isProfileUpdated } =
+      request.body;
+    const { email } = request;
+    if (!email) {
+      return response.status(400).json({ message: "Unauthorized" });
+    }
+    // Construct update object dynamically
+    const updateFields = {};
+    if (name) updateFields.name = name;
+    if (designation) updateFields.designation = designation;
+    if (gender) updateFields.gender = gender;
+    if (profileImage) updateFields.profileImage = profileImage;
+    if (bio) updateFields.bio = bio;
+    if (isProfileUpdated !== undefined)
+      updateFields.isProfileUpdated = isProfileUpdated;
+
+    // Update only provided fields
+    const result = await connection.updateOne(
       { email: email },
-      {
-        $set: {
-          name: name,
-          designation: designation,
-          gender: gender,
-          isProfileUpdated: isProfileUpdated,
-        },
-      }
-    )
-    .then(async (res) => {
-      const profile = await connection.findOne({ email: email });
-      console.log(profile, "PROFILE");
-      response.status(200).json({
-        message: "Thank you, profile details updated successfully!",
-        profile,
-      });
-    })
-    .catch((err) => response.send(err));
+      { $set: updateFields }
+    );
+
+    if (result.matchedCount === 0) {
+      return response.status(404).json({ message: "User not found" });
+    }
+
+    // Fetch updated profile
+    const profile = await connection.findOne({ email: email });
+
+    response.status(200).json({
+      message: "Profile updated successfully!",
+      profile,
+    });
+  } catch (error) {
+    response.status(500).json({ message: "An error occurred", error });
+  }
 });
 
 app.get("/profile/check", authenticateToken, (request, response) => {
@@ -385,7 +423,7 @@ app.post("/saveblog", authenticateToken, async (request, response) => {
       { new: true }
     )
     .then((res) => {
-      response.status(200).send(res);
+      response.status(200).send({ flag: "success" });
     })
     .catch((err) => response.send(err));
 });
@@ -401,7 +439,7 @@ app.put("/saveblog", authenticateToken, async (request, response) => {
       { $pull: { savedUsers: email } }
     )
     .then((res) => {
-      response.status(200).send(res);
+      response.status(200).send({ flag: "success" });
     })
     .catch((err) => response.send(err));
 });
@@ -409,7 +447,7 @@ app.put("/saveblog", authenticateToken, async (request, response) => {
 //GET ALL SAVED BLOGS OF USER API
 app.get("/usersaved", authenticateToken, async (request, response) => {
   const { email } = request;
-  const savedBlogsArray = await Model.find({});
+  const savedBlogsArray = await Model.find({}, { html: 0 });
   let blogs = [];
   savedBlogsArray.findIndex((each, index) => {
     if (each._doc.savedUsers.includes(email)) {
@@ -437,6 +475,8 @@ const upload = multer({
     }
   },
 });
+
+/* BLOG THUMBNAIL */
 app.post(
   "/post/blogthumb",
   authenticateToken,
@@ -459,12 +499,62 @@ app.post(
       });
 
       const { url } = blob; // Adjust based on the response format from `put`
-      console.log("Uploaded Image URL:", url);
-
       return response.status(200).json({ url });
     } catch (error) {
       console.error("Error uploading image:", error);
       response.status(500).json({ error: error.message });
+    }
+  }
+);
+
+/* PROFILE IMAGE UPLOAD */
+app.post(
+  "/upload/profile-image",
+  authenticateToken,
+  upload.single("image"),
+  async (request, response) => {
+    try {
+      const file = request.file;
+      if (!file) {
+        return response.status(400).json({ message: "No file uploaded." });
+      }
+
+      const { email } = request;
+      if (!email) {
+        return response.status(400).json({ message: "Unauthorized" });
+      }
+
+      // Upload to Vercel Blob
+      const filename = `profile_${Date.now()}`; // Unique filename
+      const blob = await put(filename, file.buffer, {
+        access: "public",
+        contentType: file.mimetype,
+      });
+
+      const { url } = blob;
+
+      // Update user collection with profile image URL
+      const result = await connection.updateOne(
+        { email: email },
+        { $set: { profileImage: url } }
+      );
+
+      if (result.matchedCount === 0) {
+        return response.status(404).json({ message: "User not found." });
+      }
+
+      // Fetch updated profile
+      const profile = await connection.findOne({ email: email });
+
+      response.status(200).json({
+        message: "Profile image uploaded successfully!",
+        profile,
+      });
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      response
+        .status(500)
+        .json({ message: "Image upload failed.", error: error.message });
     }
   }
 );
@@ -523,6 +613,138 @@ app.get("/api/techblogs", async (req, res) => {
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Error fetching blogs of the month" });
+  }
+});
+
+app.get("/author/:email", authenticateToken, async (req, res) => {
+  try {
+    const { email } = req.params;
+    // Fetch only required fields
+    const author = await connection.findOne(
+      { email }
+      // "name email bio image followers articles"
+    );
+
+    if (!author) {
+      return res.status(404).json({ message: "Author not found" });
+    }
+
+    res.status(200).json({
+      name: author.name,
+      email: author.email,
+      bio: author.bio || "This author loves sharing insightful thoughts.",
+      image: author.profileImage || "", // Empty if no profile image
+      // followers: author.followers || 0,
+      articles: author?.createdBlogs?.length || 0,
+    });
+  } catch (error) {
+    console.error("Error fetching author details:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+app.post("/comments/like", authenticateToken, async (request, response) => {
+  try {
+    const { blogId, commentIndex } = request.body;
+    const { email } = request;
+
+    if (!blogId || commentIndex === undefined) {
+      return response.status(400).json({ error: "Missing required fields" });
+    }
+
+    const blog = await connectionBlogs.findOne({ _id: new ObjectId(blogId) });
+
+    if (!blog) return response.status(404).json({ error: "Blog not found" });
+
+    if (!blog.comments || blog.comments.length <= commentIndex) {
+      return response.status(404).json({ error: "Comment not found" });
+    }
+
+    // Ensure the comment has a 'likes' array
+    if (!blog.comments[commentIndex].likes) {
+      blog.comments[commentIndex].likes = [];
+    }
+
+    // Check if user already liked it
+    const alreadyLiked = blog.comments[commentIndex].likes.includes(email);
+
+    if (alreadyLiked) {
+      // Unlike (Remove user from likes)
+      blog.comments[commentIndex].likes = blog.comments[
+        commentIndex
+      ].likes.filter((id) => email !== email);
+    } else {
+      // Like (Add user to likes)
+      blog.comments[commentIndex].likes.push(email);
+    }
+
+    // Update the specific comment inside the array
+    const updatedBlog = await connectionBlogs.findOneAndUpdate(
+      { _id: new ObjectId(blogId) },
+      {
+        $set: {
+          [`comments.${commentIndex}.likes`]: blog.comments[commentIndex].likes,
+        },
+      },
+      { returnDocument: "after" }
+    );
+
+    response.status(200).json({
+      message: "Comment liked/unliked successfully",
+      likes: updatedBlog.comments[commentIndex].likes,
+    });
+  } catch (error) {
+    console.error("Error liking comment:", error);
+    response.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+app.post("/comments/reply", authenticateToken, async (req, res) => {
+  try {
+    const { blogId, commentIndex, replyText, name } = req.body;
+
+    if (!blogId || commentIndex === undefined || !replyText || !name) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    // Create reply object
+    const reply = {
+      _id: new ObjectId(),
+      name,
+      comment: replyText,
+      dateObject: new Date(),
+    };
+
+    // Find the blog and check if the comment exists
+    const blog = await connectionBlogs.findOne(
+      { _id: new ObjectId(blogId) },
+      { projection: { [`comments.${commentIndex}.replies`]: 1 } }
+    );
+
+    if (!blog) return res.status(404).json({ error: "Blog not found" });
+
+    const comment = blog.comments[commentIndex];
+
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+    // Update the comment to add a reply
+    const updateAction = {
+      $push: { [`comments.${commentIndex}.replies`]: reply },
+    };
+
+    const result = await connectionBlogs.updateOne(
+      { _id: new ObjectId(blogId) },
+      updateAction
+    );
+
+    if (result.modifiedCount === 0) {
+      return res.status(400).json({ error: "Reply operation failed" });
+    }
+
+    res.status(200).json({ message: "Reply added", reply });
+  } catch (error) {
+    console.error("Error adding reply:", error);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 });
 

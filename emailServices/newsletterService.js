@@ -92,7 +92,7 @@ const sendBlogsMail = expressAsyncHandler(async (request, response) => {
   });
   var mailOptions = {
     from: process.env.SMTP_MAIL,
-    // to: emailsArray,
+    // to: "aapmorblogs@NETORGFT14151451.onmicrosoft.com",
     to: [
       "praveensaik@aapmor.com",
       "ganeshg@aapmor.com",
