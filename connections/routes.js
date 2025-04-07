@@ -580,25 +580,50 @@ app.post("/api/winners", authenticateToken, async (req, res) => {
   }
 });
 
-app.get("/api/winners/current", async (req, res) => {
+// app.get("/api/winners/current", async (req, res) => {
+//   try {
+//     const currentMonth = new Intl.DateTimeFormat("en-US", {
+//       month: "long",
+//     }).format(new Date(new Date().setMonth(new Date().getMonth() - 1)));
+
+//     const winner = await Winner.find({ month: currentMonth }).sort({
+//       _id: -1,
+//     });
+
+//     if (winner.length === 0) {
+//       return res
+//         .status(200)
+//         .json({ message: "No winner found for this month." });
+//     }
+
+//     res.json(winner);
+//   } catch (error) {
+//     res.status(500).json({ error: "Error fetching winner of the month" });
+//   }
+// });
+app.get("/api/winners", async (req, res) => {
   try {
-    const currentMonth = new Intl.DateTimeFormat("en-US", {
-      month: "long",
-    }).format(new Date(new Date().setMonth(new Date().getMonth() - 1)));
-
-    const winner = await Winner.find({ month: currentMonth }).sort({
-      _id: -1,
-    });
-
-    if (winner.length === 0) {
-      return res
-        .status(200)
-        .json({ message: "No winner found for this month." });
+    const monthsToFetch = parseInt(req.query.months) || 3;
+    const now = new Date();
+    const monthYearPairs = [];
+    for (let i = 0; i < monthsToFetch; i++) {
+      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const month = new Intl.DateTimeFormat("en-US", { month: "long" }).format(
+        date
+      );
+      monthYearPairs.push(month);
     }
-
-    res.json(winner);
+    // Fetch winners for the last N months
+    const winners = await Winner.find({
+      month: { $in: monthYearPairs },
+    }).sort({ _id: -1 });
+    if (!winners || winners.length === 0) {
+      return res.status(200).json({ message: "No winners found." });
+    }
+    res.json(winners);
   } catch (error) {
-    res.status(500).json({ error: "Error fetching winner of the month" });
+    console.error("Error fetching winners:", error);
+    res.status(500).json({ error: "Error fetching winners." });
   }
 });
 
@@ -776,6 +801,85 @@ app.post("/comments/reply", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Error adding reply:", error);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+});
+
+// Get top liked blogs grouped by month (current + previous month)
+app.get("/top-liked-blogs", async (req, res) => {
+  try {
+    const monthsToFetch = parseInt(req.query.months) || 2; // Optional query param
+    // const Model = mongoose.model("blogs"); // use your existing model
+
+    // Calculate date from which to fetch blogs (start of N months ago)
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - (monthsToFetch - 1));
+    startDate.setDate(1); // Start from the first day of that month
+
+    const blogs = await Model.aggregate([
+      {
+        $addFields: {
+          parsedDate: { $toDate: "$date" }, // Convert string to Date
+        },
+      },
+      {
+        $match: {
+          parsedDate: { $gte: startDate },
+          "likes.0": { $exists: true },
+        },
+      },
+      {
+        $addFields: {
+          year: { $year: "$parsedDate" },
+          month: { $month: "$parsedDate" },
+          likesCount: { $size: "$likes" },
+        },
+      },
+      {
+        $sort: { year: -1, month: -1, likesCount: -1 },
+      },
+      {
+        $group: {
+          _id: { year: "$year", month: "$month" },
+          topBlogs: { $push: "$$ROOT" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          year: "$_id.year",
+          month: "$_id.month",
+          topBlogs: {
+            $map: {
+              input: { $slice: ["$topBlogs", 5] },
+              as: "blog",
+              in: {
+                _id: "$$blog._id",
+                title: "$$blog.title",
+                description: "$$blog.description",
+                category: "$$blog.category",
+                blogImage: "$$blog.blogImage",
+                username: "$$blog.username",
+                userrole: "$$blog.userrole",
+                date: "$$blog.date",
+                likes: "$$blog.likes",
+                comments: "$$blog.comments",
+                savedUsers: "$$blog.savedUsers",
+                email: "$$blog.email",
+                publishedToWeb: "$$blog.publishedToWeb",
+                // html field is excluded
+              },
+            },
+          },
+        },
+      },
+      {
+        $sort: { year: -1, month: -1 },
+      },
+    ]);
+    res.status(200).json(blogs);
+  } catch (error) {
+    console.error("Error fetching top liked blogs:", error);
+    res.status(500).json({ message: "Internal Server Error" });
   }
 });
 
