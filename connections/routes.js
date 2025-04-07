@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const app = express();
 const { put } = require("@vercel/blob");
 const { connection, connectionBlogs } = require("./database");
-const { Model, Winner, CommentModel } = require("./schema");
+const { Model, Winner, CommentModel, PublishModel } = require("./schema");
 const { sendEmail } = require("../emailServices/otpService");
 const { ObjectId } = require("mongodb");
 const { sendBlogsMail } = require("../emailServices/newsletterService");
@@ -602,17 +602,48 @@ app.get("/api/winners/current", async (req, res) => {
   }
 });
 
-app.get("/api/techblogs", async (req, res) => {
+app.get("/api/publishblogs/aapmor", async (req, res) => {
   try {
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth(); // Get current month (0-based)
-    const blogs = await Model.find({
-      category: "Technology",
-    }).limit(5);
-    res.status(200).json({ data: blogs });
+    const blogs = await PublishModel.find({});
+    if (blogs.length > 0) {
+      res.status(200).json({ data: blogs });
+    } else {
+      res.status(200).json({ data: "No Blogs Found" });
+    }
   } catch (error) {
     console.log(error);
     res.status(500).json({ error: "Error fetching blogs of the month" });
+  }
+});
+app.post("/api/publishblogs/aapmor", async (req, res) => {
+  const body = req.body;
+  const { blogId } = body;
+  console.log(blogId);
+  try {
+    const blog = await PublishModel.create(body);
+    await connectionBlogs.updateOne(
+      { _id: new ObjectId(blogId) },
+      { $set: { publishedToWeb: true } }
+    );
+    res.status(200).json({ data: "Blog Published to Aapmor", blog });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Error publishing blog" });
+  }
+});
+app.delete("/api/publishblogs/aapmor/:blogId", async (req, res) => {
+  const { blogId } = req.params;
+  console.log(blogId, "BLOG ID");
+  try {
+    await PublishModel.deleteOne({ blogId: blogId });
+    await connectionBlogs.updateOne(
+      { _id: new ObjectId(blogId) },
+      { $set: { publishedToWeb: false } }
+    );
+    res.status(200).json({ data: "Blog Un Published to Aapmor" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Error un publishing blog" });
   }
 });
 

@@ -25,7 +25,23 @@ const CommentSchema = new mongoose.Schema({
   replies: { type: [ReplySchema], default: [] }, // Stores nested replies
 });
 
+const publishToAapmor = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String, required: true },
+  category: { type: String, required: true },
+  blogImage: { type: String, required: true },
+  username: { type: String, required: true },
+  userrole: { type: String, required: true },
+  date: { type: String, required: true },
+  likes: { type: Array, required: true },
+  comments: { type: Array, required: true },
+  email: { type: String, required: true },
+  publishedDate: { type: Date, default: Date.now },
+  blogId: { type: String, required: true },
+});
+
 const CommentModel = mongoose.model("Comment", CommentSchema);
+const PublishModel = mongoose.model("publishedblogs", publishToAapmor);
 
 const Winner = mongoose.model("Winner", winnerSchema);
 exports.Model = Model;
@@ -33,3 +49,4 @@ exports.UserModel = UserModel;
 exports.EmailModel = EmailModel;
 exports.Winner = Winner;
 exports.CommentModel = CommentModel;
+exports.PublishModel = PublishModel;
