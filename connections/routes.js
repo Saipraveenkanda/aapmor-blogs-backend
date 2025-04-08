@@ -633,7 +633,7 @@ app.get("/api/publishblogs/aapmor", async (req, res) => {
     if (blogs.length > 0) {
       res.status(200).json({ data: blogs });
     } else {
-      res.status(200).json({ data: "No Blogs Found" });
+      res.status(200).json({ data: [] });
     }
   } catch (error) {
     console.log(error);
