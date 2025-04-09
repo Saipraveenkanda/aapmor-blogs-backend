@@ -815,67 +815,72 @@ app.get("/top-liked-blogs", async (req, res) => {
     startDate.setMonth(startDate.getMonth() - (monthsToFetch - 1));
     startDate.setDate(1); // Start from the first day of that month
 
-    const blogs = await Model.aggregate([
-      {
-        $addFields: {
-          parsedDate: { $toDate: "$date" }, // Convert string to Date
+    const blogs = await Model.aggregate(
+      [
+        {
+          $addFields: {
+            parsedDate: { $toDate: "$date" }, // Convert string to Date
+          },
         },
-      },
-      {
-        $match: {
-          parsedDate: { $gte: startDate },
-          "likes.0": { $exists: true },
+        {
+          $match: {
+            parsedDate: { $gte: startDate },
+            "likes.0": { $exists: true },
+          },
         },
-      },
-      {
-        $addFields: {
-          year: { $year: "$parsedDate" },
-          month: { $month: "$parsedDate" },
-          likesCount: { $size: "$likes" },
+        {
+          $addFields: {
+            year: { $year: "$parsedDate" },
+            month: { $month: "$parsedDate" },
+            likesCount: { $size: "$likes" },
+          },
         },
-      },
-      {
-        $sort: { year: -1, month: -1, likesCount: -1 },
-      },
-      {
-        $group: {
-          _id: { year: "$year", month: "$month" },
-          topBlogs: { $push: "$$ROOT" },
+        {
+          $sort: { year: -1, month: -1, likesCount: -1 },
         },
-      },
-      {
-        $project: {
-          _id: 0,
-          year: "$_id.year",
-          month: "$_id.month",
-          topBlogs: {
-            $map: {
-              input: { $slice: ["$topBlogs", 5] },
-              as: "blog",
-              in: {
-                _id: "$$blog._id",
-                title: "$$blog.title",
-                description: "$$blog.description",
-                category: "$$blog.category",
-                blogImage: "$$blog.blogImage",
-                username: "$$blog.username",
-                userrole: "$$blog.userrole",
-                date: "$$blog.date",
-                likes: "$$blog.likes",
-                comments: "$$blog.comments",
-                savedUsers: "$$blog.savedUsers",
-                email: "$$blog.email",
-                publishedToWeb: "$$blog.publishedToWeb",
-                // html field is excluded
+        {
+          $group: {
+            _id: { year: "$year", month: "$month" },
+            topBlogs: { $push: "$$ROOT" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            year: "$_id.year",
+            month: "$_id.month",
+            topBlogs: {
+              $map: {
+                input: { $slice: ["$topBlogs", 5] },
+                as: "blog",
+                in: {
+                  _id: "$$blog._id",
+                  title: "$$blog.title",
+                  description: "$$blog.description",
+                  category: "$$blog.category",
+                  blogImage: "$$blog.blogImage",
+                  username: "$$blog.username",
+                  userrole: "$$blog.userrole",
+                  date: "$$blog.date",
+                  likes: "$$blog.likes",
+                  comments: "$$blog.comments",
+                  savedUsers: "$$blog.savedUsers",
+                  email: "$$blog.email",
+                  publishedToWeb: "$$blog.publishedToWeb",
+                  // html field is excluded
+                },
               },
             },
           },
         },
-      },
+        {
+          $sort: { year: -1, month: -1 },
+        },
+      ],
       {
-        $sort: { year: -1, month: -1 },
-      },
-    ]);
+        allowDiskUse: true,
+      }
+    );
     res.status(200).json(blogs);
   } catch (error) {
     console.error("Error fetching top liked blogs:", error);
