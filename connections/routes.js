@@ -805,21 +805,116 @@ app.post("/comments/reply", authenticateToken, async (req, res) => {
 });
 
 // Get top liked blogs grouped by month (current + previous month)
+// app.get("/top-liked-blogs", async (req, res) => {
+//   try {
+//     const monthsToFetch = parseInt(req.query.months) || 2; // Optional query param
+//     // const Model = mongoose.model("blogs"); // use your existing model
+
+//     // Calculate date from which to fetch blogs (start of N months ago)
+//     const startDate = new Date();
+//     startDate.setMonth(startDate.getMonth() - (monthsToFetch - 1));
+//     startDate.setDate(1); // Start from the first day of that month
+
+//     const blogs = await Model.aggregate(
+//       [
+//         {
+//           $addFields: {
+//             parsedDate: { $toDate: "$date" }, // Convert string to Date
+//           },
+//         },
+//         {
+//           $match: {
+//             parsedDate: { $gte: startDate },
+//             "likes.0": { $exists: true },
+//           },
+//         },
+//         {
+//           $addFields: {
+//             year: { $year: "$parsedDate" },
+//             month: { $month: "$parsedDate" },
+//             likesCount: { $size: "$likes" },
+//           },
+//         },
+//         {
+//           $sort: { year: -1, month: -1, likesCount: -1 },
+//         },
+//         {
+//           $group: {
+//             _id: { year: "$year", month: "$month" },
+//             topBlogs: { $push: "$$ROOT" },
+//           },
+//         },
+//         {
+//           $project: {
+//             _id: 0,
+//             year: "$_id.year",
+//             month: "$_id.month",
+//             topBlogs: {
+//               $map: {
+//                 input: { $slice: ["$topBlogs", 5] },
+//                 as: "blog",
+//                 in: {
+//                   _id: "$$blog._id",
+//                   title: "$$blog.title",
+//                   description: "$$blog.description",
+//                   category: "$$blog.category",
+//                   blogImage: "$$blog.blogImage",
+//                   username: "$$blog.username",
+//                   userrole: "$$blog.userrole",
+//                   date: "$$blog.date",
+//                   likes: "$$blog.likes",
+//                   comments: "$$blog.comments",
+//                   savedUsers: "$$blog.savedUsers",
+//                   email: "$$blog.email",
+//                   publishedToWeb: "$$blog.publishedToWeb",
+//                   // html field is excluded
+//                 },
+//               },
+//             },
+//           },
+//         },
+//         {
+//           $sort: { year: -1, month: -1 },
+//         },
+//       ],
+//       {
+//         allowDiskUse: true,
+//       }
+//     );
+//     res.status(200).json(blogs);
+//   } catch (error) {
+//     console.error("Error fetching top liked blogs:", error);
+//     res.status(500).json({ message: "Internal Server Error" });
+//   }
+// });
 app.get("/top-liked-blogs", async (req, res) => {
   try {
-    const monthsToFetch = parseInt(req.query.months) || 2; // Optional query param
-    // const Model = mongoose.model("blogs"); // use your existing model
-
-    // Calculate date from which to fetch blogs (start of N months ago)
+    const monthsToFetch = parseInt(req.query.months) || 2;
     const startDate = new Date();
     startDate.setMonth(startDate.getMonth() - (monthsToFetch - 1));
-    startDate.setDate(1); // Start from the first day of that month
+    startDate.setDate(1);
 
     const blogs = await Model.aggregate(
       [
         {
+          $project: {
+            title: 1,
+            description: 1,
+            category: 1,
+            blogImage: 1,
+            username: 1,
+            userrole: 1,
+            date: 1,
+            likes: 1,
+            comments: 1,
+            savedUsers: 1,
+            email: 1,
+            publishedToWeb: 1,
+          },
+        },
+        {
           $addFields: {
-            parsedDate: { $toDate: "$date" }, // Convert string to Date
+            parsedDate: { $toDate: "$date" },
           },
         },
         {
@@ -849,28 +944,7 @@ app.get("/top-liked-blogs", async (req, res) => {
             _id: 0,
             year: "$_id.year",
             month: "$_id.month",
-            topBlogs: {
-              $map: {
-                input: { $slice: ["$topBlogs", 5] },
-                as: "blog",
-                in: {
-                  _id: "$$blog._id",
-                  title: "$$blog.title",
-                  description: "$$blog.description",
-                  category: "$$blog.category",
-                  blogImage: "$$blog.blogImage",
-                  username: "$$blog.username",
-                  userrole: "$$blog.userrole",
-                  date: "$$blog.date",
-                  likes: "$$blog.likes",
-                  comments: "$$blog.comments",
-                  savedUsers: "$$blog.savedUsers",
-                  email: "$$blog.email",
-                  publishedToWeb: "$$blog.publishedToWeb",
-                  // html field is excluded
-                },
-              },
-            },
+            topBlogs: { $slice: ["$topBlogs", 5] },
           },
         },
         {
@@ -878,7 +952,7 @@ app.get("/top-liked-blogs", async (req, res) => {
         },
       ],
       {
-        allowDiskUse: true,
+        allowDiskUse: true, // ✅ This is the fix for memory overflow
       }
     );
     res.status(200).json(blogs);
