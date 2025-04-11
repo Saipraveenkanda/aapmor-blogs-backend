@@ -40,10 +40,11 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-// Start the server
-server.listen(PORT, () => {
-  console.log(`🚀 Server running on ${PORT}`);
-});
+if (require.main === module) {
+  server.listen(PORT, () => {
+    console.log(`🚀 Server running on ${PORT}`);
+  });
+}
 
 // Export for usage in other files (optional if already attaching to req)
 // module.exports = { app, io, userSocketMap };
