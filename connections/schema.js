@@ -40,6 +40,40 @@ const publishToAapmor = new mongoose.Schema({
   blogId: { type: String, required: true },
 });
 
+const notificationSchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ["like", "comment", "reply", "follow", "system"],
+    required: true,
+  },
+  blogId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Blog", // optional ref to the blogs collection
+    required: false,
+  },
+  recipient: {
+    type: String, // email of the blog owner or user who should receive it
+    required: true,
+  },
+  sender: {
+    name: String,
+    email: String,
+  },
+  message: {
+    type: String,
+    required: true,
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now,
+  },
+  read: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const Notification = mongoose.model("Notification", notificationSchema);
 const CommentModel = mongoose.model("Comment", CommentSchema);
 const PublishModel = mongoose.model("publishedblogs", publishToAapmor);
 
@@ -50,3 +84,4 @@ exports.EmailModel = EmailModel;
 exports.Winner = Winner;
 exports.CommentModel = CommentModel;
 exports.PublishModel = PublishModel;
+exports.Notification = Notification;

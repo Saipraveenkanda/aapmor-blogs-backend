@@ -1,10 +1,18 @@
+const { Types } = require("mongoose");
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const app = express();
 const { put } = require("@vercel/blob");
 const { connection, connectionBlogs } = require("./database");
-const { Model, Winner, CommentModel, PublishModel } = require("./schema");
+const {
+  Model,
+  Winner,
+  CommentModel,
+  PublishModel,
+  Notification,
+  UserModel,
+} = require("./schema");
 const { sendEmail } = require("../emailServices/otpService");
 const { ObjectId } = require("mongodb");
 const { sendBlogsMail } = require("../emailServices/newsletterService");
@@ -16,7 +24,8 @@ const { generateUserBio } = require("./generateAutoBio");
 app.post("/sendEmail", sendEmail);
 app.post("/publishBlog", sendBlogsMail);
 app.post("/summarize", summarizeText);
-
+const { io, userSocketMap } = require("../server");
+const { default: mongoose } = require("mongoose");
 //middleware
 const authenticateToken = (request, response, next) => {
   let jwtToken;
@@ -103,6 +112,9 @@ app.post("/blogs", authenticateToken, async (request, response) => {
   } = request.body;
   const { email } = request;
 
+  const user = await UserModel.findOne({ email: email });
+  const authorId = user._id;
+  console.log(authorId, "AUTHOR ID");
   try {
     const blogResult = await connectionBlogs.insertOne({
       title,
@@ -117,6 +129,7 @@ app.post("/blogs", authenticateToken, async (request, response) => {
       html: htmlFile,
       savedUsers,
       email,
+      authorId,
     });
 
     const blogId = blogResult.insertedId;
@@ -296,7 +309,7 @@ app.post("/profile", authenticateToken, async (request, response) => {
 app.get("/profile/check", authenticateToken, (request, response) => {
   const { email } = request;
   connection.findOne({ email: email }).then((res) => {
-    if (res.isProfileUpdated === true) {
+    if (res?.isProfileUpdated === true) {
       response.status(200);
       response.json({ message: "Profile already updated", res });
     } else {
@@ -350,6 +363,8 @@ app.get("/profile/check", authenticateToken, (request, response) => {
 // SAVE BLOGS API
 
 app.put("/likes", authenticateToken, async (request, response) => {
+  const io = request.io;
+  const userSocketMap = request.userSocketMap;
   const { id, name } = request.body;
   const { email } = request;
   const likeObject = {
@@ -357,7 +372,6 @@ app.put("/likes", authenticateToken, async (request, response) => {
     email,
     time: new Date(),
   };
-
   if (!id) {
     return response.status(400).json({ error: "Blog ID is required." });
   }
@@ -369,7 +383,6 @@ app.put("/likes", authenticateToken, async (request, response) => {
     }
 
     const userLiked = blog.likes?.some((like) => like.email === email);
-
     if (userLiked) {
       // Unlike (remove like)
       const updatedBlog = await connectionBlogs.findOneAndUpdate(
@@ -388,13 +401,38 @@ app.put("/likes", authenticateToken, async (request, response) => {
       const updatedBlog = await connectionBlogs.findOneAndUpdate(
         { _id: new ObjectId(id), "likes.email": { $ne: email } }, // Ensure user hasn't liked
         { $push: { likes: likeObject } }, // Add like
-        { returnDocument: "after" }
+        { new: true }
       );
 
       if (!updatedBlog) {
         return response.json({
           success: false,
           message: "Already liked, ignoring duplicate request",
+        });
+      }
+      // 🔔 Emit real-time notification only if blog owner is online
+      const blogOwnerId = updatedBlog.authorId?.toString();
+      const socketId = userSocketMap.get(blogOwnerId);
+      if (!socketId) {
+        console.warn(`No socket ID found for blog owner ${blogOwnerId}`);
+      }
+      await Notification.create({
+        type: "like",
+        blogId: updatedBlog._id,
+        recipient: updatedBlog?.authorId,
+        sender: { name, email },
+        message: `${name} liked your blog.`,
+        timestamp: new Date(),
+        read: false,
+      });
+
+      if (socketId) {
+        io.to(socketId).emit("notification", {
+          type: "like",
+          blogId: updatedBlog._id,
+          from: { name, email },
+          message: `${name} liked your blog.`,
+          timestamp: new Date(),
         });
       }
 
@@ -959,6 +997,21 @@ app.get("/top-liked-blogs", async (req, res) => {
   } catch (error) {
     console.error("Error fetching top liked blogs:", error);
     res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+app.get("/notifications", authenticateToken, async (req, res) => {
+  try {
+    console.log(req.email);
+    const user = await UserModel.findOne({ email: req.email });
+    const authorId = user._id;
+    const notifications = await Notification.find({ recipient: authorId })
+      .sort({ timestamp: -1 })
+      .limit(50);
+    // console.log(notifications);
+    res.json({ notifications });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch notifications" });
   }
 });
 
