@@ -17,7 +17,8 @@
     "socket.io": "^4.8.1"
   },
   "scripts": {
-    "start": "nodemon server.js"
+    "start": "node server.js",
+    "dev":"nodemon server.js"
   },
   "name": "aapmor-blogs-backend",
   "version": "1.0.0",
