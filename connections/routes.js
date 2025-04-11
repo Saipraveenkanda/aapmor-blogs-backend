@@ -1,4 +1,3 @@
-const { Types } = require("mongoose");
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
@@ -24,8 +23,6 @@ const { generateUserBio } = require("./generateAutoBio");
 app.post("/sendEmail", sendEmail);
 app.post("/publishBlog", sendBlogsMail);
 app.post("/summarize", summarizeText);
-const { io, userSocketMap } = require("../server");
-const { default: mongoose } = require("mongoose");
 //middleware
 const authenticateToken = (request, response, next) => {
   let jwtToken;
