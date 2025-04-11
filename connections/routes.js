@@ -1012,4 +1012,15 @@ app.get("/notifications", authenticateToken, async (req, res) => {
   }
 });
 
+app.delete("/notifications/:userId", authenticateToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    await Notification.deleteMany({ recipient: userId });
+    res.status(200).json({ message: "Notifications cleared" });
+  } catch (error) {
+    console.error("Clear notification error", error);
+    res.status(500).json({ error: "Failed to clear notifications" });
+  }
+});
+
 module.exports = app;
