@@ -229,47 +229,7 @@ app.post("/comments", authenticateToken, async (request, response) => {
   const { email } = request;
   const { comment, id, name, dateObject } = request.body;
   const blog = await connectionBlogs.findOne({ _id: new ObjectId(id) });
-  // connectionBlogs
-  //   .findOneAndUpdate(
-  //     { _id: new ObjectId(id) },
-  //     { $push: { comments: { comment, name, dateObject } } },
-  //     { $upsert: true },
-  //     { new: true }
-  //   )
-  //   .then(async (res) => {
-  //     /* SENDING LIVE NOTIFICATION TO USER */
-  //     const blogOwnerId = res.authorId?.toString();
-  //     console.log(
-  //       socketId,
-  //       io,
-  //       blogOwnerId,
-  //       res._id,
-  //       "FIELDS CHECK FROM ROUTE"
-  //     );
-  //     await sendNotification({
-  //       io,
-  //       userSocketMap,
-  //       userId: blogOwnerId,
-  //       type: "comment",
-  //       blogId: res._id,
-  //       from: { name, email },
-  //       message: `${name} commented on your blog`,
-  //       broadcastMessage,
-  //     });
-  //     /* STORING NOTIFICATION ACTIVITY IN DB */
-  //     // await Notification.create({
-  //     //   type: "comment",
-  //     //   blogId: res._id,
-  //     //   recipient: res?.authorId,
-  //     //   sender: { name, email },
-  //     //   message: `${name} commented on your blog.`,
-  //     //   timestamp: new Date(),
-  //     //   read: false,
-  //     // });
 
-  //     response.status(200).json({ message: "new comment added" });
-  //   })
-  //   .catch((err) => response.send(err));
   connectionBlogs
     .findOneAndUpdate(
       { _id: new ObjectId(id) },
@@ -283,11 +243,6 @@ app.post("/comments", authenticateToken, async (request, response) => {
       }
 
       const blogOwnerId = res.authorId?.toString();
-      console.log("✅ Blog updated, going to sendNotification:", {
-        blogOwnerId,
-        blogId: res._id,
-      });
-
       await sendNotification({
         io,
         userSocketMap,
@@ -296,7 +251,8 @@ app.post("/comments", authenticateToken, async (request, response) => {
         blogId: res._id,
         from: { name, email },
         message: `${name} commented on your blog - ${blog.title}`,
-        broadcastMessage: `${name} commented on ${updatedBlog.username}'s blog`,
+        comment: comment,
+        broadcastMessage: `${name} commented on ${res.username}'s blog`,
       });
 
       response.status(200).json({ message: "new comment added" });

@@ -10,6 +10,7 @@ async function sendNotification({
   blogId,
   from,
   message,
+  comment,
   broadcastMessage,
 }) {
   const socketId = userSocketMap.get(userId);
@@ -24,6 +25,7 @@ async function sendNotification({
       blogId,
       sender: { ...from, profileImage: user?.profileImage },
       message: message,
+      comment,
       timestamp: new Date(),
     });
   }
@@ -35,6 +37,7 @@ async function sendNotification({
         blogId,
         sender: { ...from, profileImage: user?.profileImage },
         message: broadcastMessage,
+        comment,
         timestamp: new Date(),
       });
     }
@@ -50,6 +53,7 @@ async function sendNotification({
       profileImage: user?.profileImage,
     },
     message: message,
+    comment,
     timestamp: new Date(),
     read: false,
   });
