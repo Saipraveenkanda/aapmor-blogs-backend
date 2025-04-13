@@ -12,8 +12,12 @@ const server = http.createServer(app);
 const { io, userSocketMap } = setupSocket(server);
 // Use JSON and CORS middleware
 app.use(express.json({ limit: "50mb" }));
-app.use(cors());
-
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 // Connect to MongoDB
 mongoose.connect(process.env.MONGO_ATLAS_CONN_URL, {
   useNewUrlParser: true,

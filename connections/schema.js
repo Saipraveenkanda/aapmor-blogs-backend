@@ -58,6 +58,7 @@ const notificationSchema = new mongoose.Schema({
   sender: {
     name: String,
     email: String,
+    profileImage: String,
   },
   message: {
     type: String,

@@ -20,10 +20,12 @@ const path = require("path");
 const { sendCommentMail } = require("../emailServices/notifyCommentMail");
 const { summarizeText } = require("./summarizeContent");
 const { generateUserBio } = require("./generateAutoBio");
+const sendNotification = require("../notificationSender");
 app.post("/sendEmail", sendEmail);
 app.post("/publishBlog", sendBlogsMail);
 app.post("/summarize", summarizeText);
 //middleware
+
 const authenticateToken = (request, response, next) => {
   let jwtToken;
   const authHeader = request.headers["authorization"];
@@ -222,19 +224,88 @@ app.get("/blogs/:id", (request, response) => {
 
 // ADD COMMENTS TO BLOG API
 app.post("/comments", authenticateToken, async (request, response) => {
+  const io = request.io;
+  const userSocketMap = request.userSocketMap;
+  const { email } = request;
   const { comment, id, name, dateObject } = request.body;
   const blog = await connectionBlogs.findOne({ _id: new ObjectId(id) });
+  // connectionBlogs
+  //   .findOneAndUpdate(
+  //     { _id: new ObjectId(id) },
+  //     { $push: { comments: { comment, name, dateObject } } },
+  //     { $upsert: true },
+  //     { new: true }
+  //   )
+  //   .then(async (res) => {
+  //     /* SENDING LIVE NOTIFICATION TO USER */
+  //     const blogOwnerId = res.authorId?.toString();
+  //     console.log(
+  //       socketId,
+  //       io,
+  //       blogOwnerId,
+  //       res._id,
+  //       "FIELDS CHECK FROM ROUTE"
+  //     );
+  //     await sendNotification({
+  //       io,
+  //       userSocketMap,
+  //       userId: blogOwnerId,
+  //       type: "comment",
+  //       blogId: res._id,
+  //       from: { name, email },
+  //       message: `${name} commented on your blog`,
+  //       broadcastMessage,
+  //     });
+  //     /* STORING NOTIFICATION ACTIVITY IN DB */
+  //     // await Notification.create({
+  //     //   type: "comment",
+  //     //   blogId: res._id,
+  //     //   recipient: res?.authorId,
+  //     //   sender: { name, email },
+  //     //   message: `${name} commented on your blog.`,
+  //     //   timestamp: new Date(),
+  //     //   read: false,
+  //     // });
+
+  //     response.status(200).json({ message: "new comment added" });
+  //   })
+  //   .catch((err) => response.send(err));
   connectionBlogs
     .findOneAndUpdate(
       { _id: new ObjectId(id) },
       { $push: { comments: { comment, name, dateObject } } },
-      { $upsert: true },
-      { new: true }
+      { upsert: true, new: true }
     )
     .then(async (res) => {
+      if (!res) {
+        console.log("⚠️ No blog found after comment update");
+        return response.status(404).json({ error: "Blog not found" });
+      }
+
+      const blogOwnerId = res.authorId?.toString();
+      console.log("✅ Blog updated, going to sendNotification:", {
+        blogOwnerId,
+        blogId: res._id,
+      });
+
+      await sendNotification({
+        io,
+        userSocketMap,
+        userId: blogOwnerId,
+        type: "comment",
+        blogId: res._id,
+        from: { name, email },
+        message: `${name} commented on your blog - ${blog.title}`,
+        broadcastMessage: `${name} commented on ${updatedBlog.username}'s blog`,
+      });
+
       response.status(200).json({ message: "new comment added" });
     })
-    .catch((err) => response.send(err));
+    .catch((err) => {
+      console.error("❌ Error in comment update:", err);
+      response.status(500).json({ error: "Internal server error" });
+    });
+
   await sendCommentMail(blog, comment, id);
 });
 
@@ -413,25 +484,17 @@ app.put("/likes", authenticateToken, async (request, response) => {
       if (!socketId) {
         console.warn(`No socket ID found for blog owner ${blogOwnerId}`);
       }
-      await Notification.create({
-        type: "like",
-        blogId: updatedBlog._id,
-        recipient: updatedBlog?.authorId,
-        sender: { name, email },
-        message: `${name} liked your blog.`,
-        timestamp: new Date(),
-        read: false,
-      });
 
-      if (socketId) {
-        io.to(socketId).emit("notification", {
-          type: "like",
-          blogId: updatedBlog._id,
-          from: { name, email },
-          message: `${name} liked your blog.`,
-          timestamp: new Date(),
-        });
-      }
+      await sendNotification({
+        io,
+        userSocketMap,
+        userId: blogOwnerId,
+        type: "like",
+        blogId: updatedBlog?.authorId,
+        from: { name, email },
+        message: `${name} liked your blog - ${updatedBlog.title}`,
+        broadcastMessage: `${name} liked ${updatedBlog.username}'s blog.`,
+      });
 
       return response.json({
         success: true,
