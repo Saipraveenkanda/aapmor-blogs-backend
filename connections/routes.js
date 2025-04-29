@@ -111,10 +111,9 @@ app.post("/blogs", authenticateToken, async (request, response) => {
   } = request.body;
   const { email } = request;
 
-  const user = await UserModel.findOne({ email: email });
-  const authorId = user._id;
-  console.log(authorId, "AUTHOR ID");
   try {
+    const user = await UserModel.findOne({ email: email });
+    const authorId = new ObjectId(user._id.toString());
     const blogResult = await connectionBlogs.insertOne({
       title,
       description,
