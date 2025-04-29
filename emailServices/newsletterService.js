@@ -92,12 +92,12 @@ const sendBlogsMail = expressAsyncHandler(async (request, response) => {
   });
   var mailOptions = {
     from: process.env.SMTP_MAIL,
-    to: emailsArray,
-    // to: [
-    //   "praveensaik@aapmor.com",
-    //   "ganeshg@aapmor.com",
-    //   "rajeswarivalagandlak@aapmor.com",
-    // ],
+    // to: emailsArray,
+    to: [
+      "praveensaik@aapmor.com",
+      "ganeshg@aapmor.com",
+      // "rajeswarivalagandlak@aapmor.com",
+    ],
     subject: getRandomBlogSubject(),
     html: resultHtml,
   };
