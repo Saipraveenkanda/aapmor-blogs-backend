@@ -21,22 +21,39 @@ const sendEmail = expressAsyncHandler(async (request, response) => {
   const { email } = request.body;
   const otpCode = getOtp();
   // console.log(otpCode);
-  const message = `<p>
-  Dear User,<br/>
-  To ensure the security of your account, we have implemented a one-time password (OTP) verification for logging into our blog application.
-  
-  <br/>
-  <h3>Your OTP is: <bold>${otpCode}</bold></h3>
-  
-  Please use this code within the next 10 minutes to complete the login process. If you didn't request this OTP or if you encounter any issues, please contact our support team immediately
-  Thank you for being a part of our blogging community! 📝
-  <br/>
-  <br/>
-  Best regards,<br/>
-  Aapmor|Blogs
-  </p>
-  `;
+  const accentColor = "#FF8F07";
+  const message = `
+  <body style="margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; background-color: #f9f9f9;">
+    <div style=" margin: auto; padding: 20px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);">
+      <h2 style="color: ${accentColor}; margin-bottom: 20px;">Aapmor Blogs - OTP Verification</h2>
+      
+      <p style="font-size: 16px; color: #333333; line-height: 1.6;">
+        Dear User,
+        <br /><br />
+        To ensure the security of your account, we have enabled One-Time Password (OTP) verification for login to Aapmor Blogs.
+      </p>
 
+      <div style="margin: 30px 0; padding: 15px; background-color: #f0f4ff; border-left: 6px solid ${accentColor}; border-radius: 4px;">
+        <p style="font-size: 18px; margin: 0; color: #111;">
+          <strong>Your OTP is:</strong>
+          <span style="font-size: 22px; font-weight: bold; color: ${accentColor};">${otpCode}</span>
+        </p>
+      </div>
+
+      <p style="font-size: 16px; color: #333333;">
+        Please use this code within the next <strong>10 minutes</strong> to complete your login.
+        <br />
+        If you did not request this OTP or face any issues, please contact our support team immediately.
+        <br /><br />
+        Thank you for being a part of the Aapmor Blogs community! 📝
+      </p>
+
+      <p style="font-size: 16px; color: #666666; margin-top: 30px;">
+        Best regards,<br />
+        <strong>Aapmor Blogs Team</strong>
+      </p>
+    </div>
+  </body>`;
   var mailOptions = {
     from: process.env.SMTP_MAIL,
     to: email,
@@ -53,7 +70,10 @@ const sendEmail = expressAsyncHandler(async (request, response) => {
         if (userObj !== null) {
           console.log("User already exists, updating OTP in Database");
           connection
-            .updateOne({ email: email }, { $set: { otp: hashedOtp } })
+            .updateOne(
+              { email: email },
+              { $set: { otp: hashedOtp, lastLogin: new Date() } }
+            )
             .then((res) => {
               response.status(200);
               response.json({ message: `OTP sent to ${email}` });
@@ -65,6 +85,7 @@ const sendEmail = expressAsyncHandler(async (request, response) => {
               email: email,
               otp: hashedOtp,
               isProfileUpdated: false,
+              timeStamp: new Date(),
             })
             .then((res) => {
               console.log(res);

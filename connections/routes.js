@@ -24,7 +24,7 @@ const sendNotification = require("../notificationSender");
 app.post("/sendEmail", sendEmail);
 app.post("/publishBlog", sendBlogsMail);
 app.post("/summarize", summarizeText);
-//middleware
+app.post("/generateBio", generateUserBio);
 
 const authenticateToken = (request, response, next) => {
   let jwtToken;
@@ -47,7 +47,6 @@ const authenticateToken = (request, response, next) => {
     });
   }
 };
-app.post("/generateBio", generateUserBio);
 // Login API
 
 app.post("/api/login", async (request, response) => {
@@ -55,8 +54,23 @@ app.post("/api/login", async (request, response) => {
   connection.findOne({ email: email }).then(async (resObj) => {
     const otpMatched = await bcrypt.compare(otp, resObj.otp);
     if (otpMatched === true) {
+      const {
+        email,
+        designation,
+        gender,
+        name,
+        isProfileUpdated,
+        admin,
+        profileImage,
+      } = resObj;
       const payload = {
-        email: email,
+        email,
+        designation,
+        gender,
+        name,
+        isProfileUpdated,
+        admin,
+        profileImage,
       };
       const jwt_token = jwt.sign(payload, "ABPPBH_ST");
       response.status(200).json({ jwt_token, email });
