@@ -33,12 +33,12 @@ const authenticateToken = (request, response, next) => {
     jwtToken = authHeader.split(" ")[1];
   }
   if (jwtToken === undefined) {
-    response.status(202);
+    response.status(203);
     response.send("Authorization failed");
   } else {
     jwt.verify(jwtToken, "ABPPBH_ST", (error, payload) => {
       if (error) {
-        response.status(202);
+        response.status(401);
         response.send("Invalid JWT Token");
       } else {
         request.email = payload.email;
