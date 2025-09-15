@@ -9,6 +9,7 @@ const winnerSchema = new mongoose.Schema({
   blogLink: { type: String, required: true },
   month: { type: String, required: true },
   blogId: { type: String, required: true },
+  blogImage: { type: String, required: false },
 });
 
 const ReplySchema = new mongoose.Schema({

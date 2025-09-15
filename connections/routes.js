@@ -207,9 +207,9 @@ app.delete("/blogs/:id", authenticateToken, async (request, response) => {
 app.get("/blogs/filter", async (request, response) => {
   const { category = "All" } = request.query;
   if (category === "All") {
-    var query = Model.find({});
+    var query = Model.find({}, { html: 0 });
   } else {
-    var query = Model.find({ category: category });
+    var query = Model.find({ category: category }, { html: 0 });
   }
   const blogsByCategory = await query;
   const reversedBlogs = blogsByCategory.reverse();
@@ -629,6 +629,7 @@ app.post(
 app.post("/api/winners", authenticateToken, async (req, res) => {
   const { email } = req;
   const { blogId } = req.body;
+  console.log(req.body, "WINNER BODY");
   const user = await connection.findOne({ email: email });
   if (user?.admin === true) {
     try {

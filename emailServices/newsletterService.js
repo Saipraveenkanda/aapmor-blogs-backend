@@ -96,7 +96,12 @@ const sendBlogsMail = expressAsyncHandler(async (request, response) => {
     to: [
       "praveensaik@aapmor.com",
       "ganeshg@aapmor.com",
-      // "rajeswarivalagandlak@aapmor.com",
+      "vsaipriya@aapmor.com",
+      "sashritha@aapmor.com",
+      "msridhar@aapmor.com",
+      "madhavij@aapmor.com",
+      "pvenkatasai@aapmor.com",
+      "rajeswarivalagandlak@aapmor.com",
     ],
     subject: getRandomBlogSubject(),
     html: resultHtml,
