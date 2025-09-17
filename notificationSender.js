@@ -1,6 +1,6 @@
 // utils/notificationSender.js
 
-const { Notification, UserModel } = require("./connections/schema");
+const { Notification, UserModel, Activity } = require("./connections/schema");
 
 async function sendNotification({
   io,
@@ -57,6 +57,19 @@ async function sendNotification({
     timestamp: new Date(),
     read: false,
   });
+  if (broadcastMessage) {
+    await Activity.create({
+      type: type,
+      blogId: blogId,
+      sender: {
+        name: from?.name,
+        email: from?.email,
+        profileImage: user?.profileImage,
+      },
+      message: broadcastMessage,
+      timestamp: new Date(),
+    });
+  }
 }
 
 module.exports = sendNotification;

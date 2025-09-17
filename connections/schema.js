@@ -75,9 +75,36 @@ const notificationSchema = new mongoose.Schema({
   },
 });
 
+const activitySchema = new mongoose.Schema({
+  type: {
+    type: String,
+    enum: ["like", "comment", "reply", "follow", "system"],
+    required: true,
+  },
+  blogId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Blog",
+    required: false,
+  },
+  sender: {
+    name: String,
+    email: String,
+    profileImage: String,
+  },
+  message: {
+    type: String,
+    required: true,
+  },
+  timestamp: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
 const Notification = mongoose.model("Notification", notificationSchema);
 const CommentModel = mongoose.model("Comment", CommentSchema);
 const PublishModel = mongoose.model("publishedblogs", publishToAapmor);
+const Activity = mongoose.model("activities", activitySchema);
 
 const Winner = mongoose.model("Winner", winnerSchema);
 exports.Model = Model;
@@ -87,3 +114,4 @@ exports.Winner = Winner;
 exports.CommentModel = CommentModel;
 exports.PublishModel = PublishModel;
 exports.Notification = Notification;
+exports.Activity = Activity;

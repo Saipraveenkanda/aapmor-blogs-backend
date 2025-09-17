@@ -227,6 +227,9 @@ app.get("/blogs/:id", (request, response) => {
     .findOne({ _id: new ObjectId(id) })
     .then((res) => {
       if (res) {
+        if (res.comments && Array.isArray(res.comments)) {
+          res.comments = [...res.comments].reverse();
+        }
         response.send(res);
       } else {
         response.status(500).send({});
