@@ -11,6 +11,7 @@ const {
   PublishModel,
   Notification,
   UserModel,
+  Activity,
 } = require("./schema");
 const { sendEmail } = require("../emailServices/otpService");
 const { ObjectId } = require("mongodb");
@@ -1056,6 +1057,20 @@ app.delete("/notifications/:userId", authenticateToken, async (req, res) => {
   } catch (error) {
     console.error("Clear notification error", error);
     res.status(500).json({ error: "Failed to clear notifications" });
+  }
+});
+
+app.get("/api/activity", async (req, res) => {
+  try {
+    const activities = await Activity.find({});
+    if (activities.length > 0) {
+      res.status(200).json({ data: activities.reverse() });
+    } else {
+      res.status(200).json({ data: [] });
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: "Error fetching activities" });
   }
 });
 
