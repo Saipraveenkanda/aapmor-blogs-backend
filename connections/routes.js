@@ -630,25 +630,68 @@ app.post(
   }
 );
 
+// app.post("/api/winners", authenticateToken, async (req, res) => {
+//   const { email } = req;
+//   const { blogId } = req.body;
+//   console.log(req.body, "WINNER BODY");
+//   const user = await connection.findOne({ email: email });
+//   if (user?.admin === true) {
+//     try {
+//       const winner = new Winner(req.body);
+//       await winner.save();
+//       await connectionBlogs.updateOne(
+//         { _id: new ObjectId(blogId) },
+//         { $set: { isBestBlog: true } }
+//       );
+//       res.status(201).json({ message: "Winner saved successfully!" });
+//     } catch (error) {
+//       res.status(500).json({ error: "Error saving winner" });
+//     }
+//   } else {
+//     res.status(403).json({ error: "No admin rights to perfrom this action" });
+//   }
+// });
 app.post("/api/winners", authenticateToken, async (req, res) => {
   const { email } = req;
   const { blogId } = req.body;
   console.log(req.body, "WINNER BODY");
-  const user = await connection.findOne({ email: email });
-  if (user?.admin === true) {
-    try {
+
+  try {
+    const user = await connection.findOne({ email });
+    if (!user?.admin) {
+      return res
+        .status(403)
+        .json({ error: "No admin rights to perform this action" });
+    }
+
+    // Check if winner already exists
+    const existingWinner = await Winner.findOne({ blogId });
+
+    if (!existingWinner) {
+      // ✅ Announce winner
       const winner = new Winner(req.body);
       await winner.save();
       await connectionBlogs.updateOne(
         { _id: new ObjectId(blogId) },
         { $set: { isBestBlog: true } }
       );
-      res.status(201).json({ message: "Winner saved successfully!" });
-    } catch (error) {
-      res.status(500).json({ error: "Error saving winner" });
+
+      return res
+        .status(201)
+        .json({ message: "Winner announced successfully!" });
+    } else {
+      // ❌ Revert winner
+      await Winner.deleteOne({ blogId });
+      await connectionBlogs.updateOne(
+        { _id: new ObjectId(blogId) },
+        { $set: { isBestBlog: false } }
+      );
+
+      return res.status(200).json({ message: "Winner reverted successfully!" });
     }
-  } else {
-    res.status(403).json({ error: "No admin rights to perfrom this action" });
+  } catch (error) {
+    console.error("Error in /api/winners:", error);
+    res.status(500).json({ error: "Error processing winner action" });
   }
 });
 
