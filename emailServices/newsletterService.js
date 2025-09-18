@@ -86,23 +86,23 @@ const sendBlogsMail = expressAsyncHandler(async (request, response) => {
 
   // CODE FOR GETTING ALL USERS EMAIL ID
   let userMap = await EmailModel.find({}, { _id: 0 });
-  const emailsArray = [];
-  userMap.forEach((user) => {
-    emailsArray.push(user._doc.email);
-  });
-  var mailOptions = {
+  const emailsArray = userMap.map((user) => user._doc.email);
+
+  // Test emails (for dev only)
+  const devEmails = [
+    "praveensaik@aapmor.com",
+    "ganeshg@aapmor.com",
+    "vsaipriya@aapmor.com",
+    "sashritha@aapmor.com",
+    "msridhar@aapmor.com",
+    "madhavij@aapmor.com",
+    "pvenkatasai@aapmor.com",
+    "rajeswarivalagandlak@aapmor.com",
+  ];
+
+  const mailOptions = {
     from: process.env.SMTP_MAIL,
-    // to: emailsArray,
-    to: [
-      "praveensaik@aapmor.com",
-      "ganeshg@aapmor.com",
-      "vsaipriya@aapmor.com",
-      "sashritha@aapmor.com",
-      "msridhar@aapmor.com",
-      "madhavij@aapmor.com",
-      "pvenkatasai@aapmor.com",
-      "rajeswarivalagandlak@aapmor.com",
-    ],
+    to: process.env.NODE_ENV === "production" ? emailsArray : devEmails,
     subject: getRandomBlogSubject(),
     html: resultHtml,
   };
