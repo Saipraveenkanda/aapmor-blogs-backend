@@ -22,6 +22,10 @@ const { sendCommentMail } = require("../emailServices/notifyCommentMail");
 const { summarizeText } = require("./summarizeContent");
 const { generateUserBio } = require("./generateAutoBio");
 const sendNotification = require("../notificationSender");
+const {
+  sendWinnerEmail,
+  sendCertificateEmail,
+} = require("../emailServices/certificateMailService");
 app.post("/sendEmail", sendEmail);
 app.post("/publishBlog", sendBlogsMail);
 app.post("/summarize", summarizeText);
@@ -184,6 +188,7 @@ app.delete("/blogs/:id", authenticateToken, async (request, response) => {
   const { email } = request;
 
   try {
+    // 1. Delete from blogs collection
     const deleteResult = await connectionBlogs.deleteOne({
       _id: new ObjectId(blogId),
     });
@@ -192,13 +197,18 @@ app.delete("/blogs/:id", authenticateToken, async (request, response) => {
       return response.status(404).json({ message: "Blog not found" });
     }
 
+    // 2. Remove blog reference from user
     await connection.updateOne(
       { email: email },
       { $pull: { createdBlogs: new ObjectId(blogId) } }
     );
 
+    // 3. Remove from winners collection if exists
+    await Winner.deleteOne({ blogId: new ObjectId(blogId) });
+
     response.status(200).json({ message: "Blog deleted successfully" });
   } catch (err) {
+    console.error("Error deleting blog:", err);
     response.status(500).send(err);
   }
 });
@@ -653,7 +663,7 @@ app.post(
 // });
 app.post("/api/winners", authenticateToken, async (req, res) => {
   const { email } = req;
-  const { blogId } = req.body;
+  const { blogId, winnerName, blogTitle, month } = req.body;
   console.log(req.body, "WINNER BODY");
 
   try {
@@ -668,19 +678,18 @@ app.post("/api/winners", authenticateToken, async (req, res) => {
     const existingWinner = await Winner.findOne({ blogId });
 
     if (!existingWinner) {
-      // ✅ Announce winner
       const winner = new Winner(req.body);
       await winner.save();
       await connectionBlogs.updateOne(
         { _id: new ObjectId(blogId) },
         { $set: { isBestBlog: true } }
       );
-
+      // await sendWinnerEmail(email, winnerName, blogTitle, month);
+      await sendWinnerEmail(email, winnerName, blogTitle, month);
       return res
         .status(201)
         .json({ message: "Winner announced successfully!" });
     } else {
-      // ❌ Revert winner
       await Winner.deleteOne({ blogId });
       await connectionBlogs.updateOne(
         { _id: new ObjectId(blogId) },

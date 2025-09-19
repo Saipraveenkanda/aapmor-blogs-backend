@@ -92,12 +92,12 @@ const sendBlogsMail = expressAsyncHandler(async (request, response) => {
   const devEmails = [
     "praveensaik@aapmor.com",
     "ganeshg@aapmor.com",
-    "vsaipriya@aapmor.com",
-    "sashritha@aapmor.com",
-    "msridhar@aapmor.com",
-    "madhavij@aapmor.com",
-    "pvenkatasai@aapmor.com",
-    "rajeswarivalagandlak@aapmor.com",
+    // "vsaipriya@aapmor.com",
+    // "sashritha@aapmor.com",
+    // "msridhar@aapmor.com",
+    // "madhavij@aapmor.com",
+    // "pvenkatasai@aapmor.com",
+    // "rajeswarivalagandlak@aapmor.com",
   ];
 
   const mailOptions = {
