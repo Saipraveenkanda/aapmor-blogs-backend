@@ -663,7 +663,7 @@ app.post(
 // });
 app.post("/api/winners", authenticateToken, async (req, res) => {
   const { email } = req;
-  const { blogId, winnerName, blogTitle, month } = req.body;
+  const { blogId, winnerName, blogTitle, month, date } = req.body;
   console.log(req.body, "WINNER BODY");
 
   try {
@@ -685,7 +685,13 @@ app.post("/api/winners", authenticateToken, async (req, res) => {
         { $set: { isBestBlog: true } }
       );
       // await sendWinnerEmail(email, winnerName, blogTitle, month);
-      await sendWinnerEmail(email, winnerName, blogTitle, month);
+      await sendWinnerEmail(
+        req?.body?.email,
+        winnerName,
+        blogTitle,
+        month,
+        date
+      );
       return res
         .status(201)
         .json({ message: "Winner announced successfully!" });

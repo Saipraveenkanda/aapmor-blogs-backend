@@ -7,7 +7,7 @@ const imagePath = path.resolve(__dirname, "BLOG_CERTIFICATE.png");
 /**
  * Generate certificate PDF from HTML template
  */
-async function generateCertificatePDF(winnerName, dateString) {
+async function generateCertificatePDF(winnerName, monthYear) {
   const imageBase64 = fs.readFileSync(imagePath).toString("base64");
   const htmlTemplate = `
   <!DOCTYPE html>
@@ -55,7 +55,7 @@ async function generateCertificatePDF(winnerName, dateString) {
     <body>
       <div class="certificate">
         <div class="name">${winnerName}</div>
-        <div class="date">${dateString}</div>
+        <div class="date">${monthYear}</div>
       </div>
     </body>
   </html>
@@ -83,9 +83,20 @@ async function generateCertificatePDF(winnerName, dateString) {
 /**
  * Send winner email with certificate attached
  */
-async function sendWinnerEmail(winnerEmail, winnerName, blogTitle, dateString) {
-  const certPath = await generateCertificatePDF(winnerName, dateString);
-  // ... (transporter setup and mailOptions remain the same) ...
+async function sendWinnerEmail(
+  winnerEmail,
+  winnerName,
+  blogTitle,
+  dateString,
+  date
+) {
+  const dateObj = new Date(date);
+  const monthYear = dateObj.toLocaleString("en-US", {
+    month: "long", // "May"
+    year: "numeric", // "2025"
+  });
+  const certPath = await generateCertificatePDF(winnerName, monthYear);
+
   // 2. Setup transporter
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -133,7 +144,7 @@ async function sendWinnerEmail(winnerEmail, winnerName, blogTitle, dateString) {
       <p style="font-size: 16px; line-height: 1.6">
         We are thrilled to announce that your blog
         <b style="color: #333">"${blogTitle}"</b> has been selected as the
-        <b style="color: #4caf50">Best Blog of ${dateString}</b>.
+        <b style="color: #4caf50">Best Blog of ${monthYear}</b>.
       </p>
 
       <p style="font-size: 15px; line-height: 1.6; margin: 20px 0; color: #555">
